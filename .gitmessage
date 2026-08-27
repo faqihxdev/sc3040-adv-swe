@@ -1,0 +1,5 @@
+<type>: <short description>
+
+# Replace the first line with the actual commit subject.
+# Allowed types: feat, fix, refactor, docs, test, chore
+# Example: feat: add login flow

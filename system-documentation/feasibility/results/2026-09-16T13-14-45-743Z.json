@@ -1,0 +1,560 @@
+{
+  "startedAt": "2026-09-16T13:14:45.743Z",
+  "mode": "live",
+  "model": "gpt-5.6-luna",
+  "reasoning": "medium",
+  "maxOutputTokensPerRequest": 6000,
+  "timeoutMs": 60000,
+  "automaticRetries": 0,
+  "environment": {
+    "node": "v24.15.0",
+    "platform": "win32",
+    "release": "10.0.26200",
+    "arch": "x64"
+  },
+  "sourceSha256": "aa40a28e26ca147b8bdbec1da5c6783fbdbc38d1f4f3e0aae50835f8f64214a8",
+  "scenariosSha256": "5799024779a8e4897b02a8e556e3cf9f5aaac1765368824e8a5405133c5b957a",
+  "instructions": "Suggest three alternative single meals for one cooking session.\nReturn fewer, including none, if the available ingredients cannot support three suitable meals.\nThe user will choose ONE meal. Do not create a multi-day plan or a shopping list.\nUse only the inventory and explicitly available staples. Empty stock is unavailable.\nRespect dietaryExclusions, excludedIngredientIds and preferences. Do not invent ingredients,\nincluding seasonings or garnishes. Every ingredient mentioned in prose must appear in the\nmeal's ingredient list with its exact supplied ID. Do not include excluded ingredients.\nEach meal must use at least one usable inventory ingredient, take at most 30 minutes,\nhave 4 to 6 clear steps, and serve the requested number of people.\nStock levels are rough bands, not weights. Give practical estimated recipe amounts for\nhuman review, but do not claim that a stock band proves a particular amount is available.\nDo not infer expiry dates, freshness or food safety. Do not update inventory.\nIf no suitable meal is possible, return an empty meals array and explain why in message.\nKeep all text concise. Return JSON matching the supplied schema.",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "meals": {
+        "type": "array",
+        "maxItems": 3,
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "summary": {
+              "type": "string",
+              "minLength": 1
+            },
+            "servings": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 4
+            },
+            "cookingMinutes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 30
+            },
+            "ingredients": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "ingredientId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "estimatedAmount": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "ingredientId",
+                  "estimatedAmount"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "steps": {
+              "type": "array",
+              "minItems": 4,
+              "maxItems": 6,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "required": [
+            "name",
+            "summary",
+            "servings",
+            "cookingMinutes",
+            "ingredients",
+            "steps"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "message": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "required": [
+      "meals",
+      "message"
+    ],
+    "additionalProperties": false
+  },
+  "results": [
+    {
+      "scenarioId": "ordinary-inventory",
+      "input": {
+        "servings": 2,
+        "mealType": "dinner",
+        "dietaryExclusions": [],
+        "excludedIngredientIds": [],
+        "inventory": [
+          {
+            "id": "egg",
+            "name": "eggs",
+            "stockLevel": "High"
+          },
+          {
+            "id": "spinach",
+            "name": "spinach",
+            "stockLevel": "Medium"
+          },
+          {
+            "id": "tomato",
+            "name": "tomatoes",
+            "stockLevel": "High"
+          },
+          {
+            "id": "bread",
+            "name": "sliced bread",
+            "stockLevel": "High"
+          }
+        ],
+        "availableStaples": [
+          {
+            "id": "oil",
+            "name": "vegetable oil"
+          },
+          {
+            "id": "salt",
+            "name": "salt"
+          },
+          {
+            "id": "water",
+            "name": "water"
+          }
+        ]
+      },
+      "expectation": "one-to-three-meals",
+      "httpStatus": 200,
+      "returnedModel": "gpt-5.6-luna",
+      "usage": {
+        "input_tokens": 465,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 741,
+        "output_tokens_details": {
+          "reasoning_tokens": 110
+        },
+        "total_tokens": 1206
+      },
+      "responseStatus": "completed",
+      "output": {
+        "meals": [
+          {
+            "name": "Spinach and Tomato Shakshuka with Toast",
+            "summary": "Eggs simmered with tomatoes and spinach, served with toasted bread.",
+            "servings": 2,
+            "cookingMinutes": 25,
+            "ingredients": [
+              {
+                "ingredientId": "eggs",
+                "estimatedAmount": "4 eggs"
+              },
+              {
+                "ingredientId": "tomato",
+                "estimatedAmount": "3 medium tomatoes, chopped"
+              },
+              {
+                "ingredientId": "spinach",
+                "estimatedAmount": "2 packed cups spinach"
+              },
+              {
+                "ingredientId": "bread",
+                "estimatedAmount": "4 slices sliced bread"
+              },
+              {
+                "ingredientId": "oil",
+                "estimatedAmount": "1 tablespoon vegetable oil"
+              },
+              {
+                "ingredientId": "salt",
+                "estimatedAmount": "1/4 teaspoon salt"
+              }
+            ],
+            "steps": [
+              "Heat vegetable oil in a skillet over medium heat.",
+              "Add tomatoes and salt, then cook for 6 minutes until softened.",
+              "Stir in spinach and cook for 2 minutes until wilted.",
+              "Make 4 wells in the tomato mixture and crack in the eggs.",
+              "Cover and cook for 6 to 8 minutes, until the egg whites are set.",
+              "Toast the sliced bread and serve with the shakshuka."
+            ]
+          },
+          {
+            "name": "Spinach, Tomato, and Egg Toasts",
+            "summary": "Soft scrambled eggs with spinach and tomatoes served over toasted bread.",
+            "servings": 2,
+            "cookingMinutes": 15,
+            "ingredients": [
+              {
+                "ingredientId": "eggs",
+                "estimatedAmount": "4 eggs"
+              },
+              {
+                "ingredientId": "spinach",
+                "estimatedAmount": "2 cups spinach, chopped"
+              },
+              {
+                "ingredientId": "tomato",
+                "estimatedAmount": "2 medium tomatoes, diced"
+              },
+              {
+                "ingredientId": "bread",
+                "estimatedAmount": "4 slices sliced bread"
+              },
+              {
+                "ingredientId": "oil",
+                "estimatedAmount": "1 tablespoon vegetable oil"
+              },
+              {
+                "ingredientId": "salt",
+                "estimatedAmount": "1/4 teaspoon salt"
+              }
+            ],
+            "steps": [
+              "Toast the sliced bread and set aside.",
+              "Heat vegetable oil in a skillet over medium heat.",
+              "Cook the tomatoes with salt for 3 minutes.",
+              "Add the spinach and cook until wilted, about 2 minutes.",
+              "Beat the eggs, add them to the skillet, and stir gently until just set.",
+              "Spoon the egg mixture over the toast and serve."
+            ]
+          },
+          {
+            "name": "Tomato and Spinach Egg Sandwiches",
+            "summary": "Folded eggs with spinach and tomatoes layered into toasted bread sandwiches.",
+            "servings": 2,
+            "cookingMinutes": 20,
+            "ingredients": [
+              {
+                "ingredientId": "eggs",
+                "estimatedAmount": "4 eggs"
+              },
+              {
+                "ingredientId": "tomato",
+                "estimatedAmount": "2 medium tomatoes, sliced"
+              },
+              {
+                "ingredientId": "spinach",
+                "estimatedAmount": "2 cups spinach"
+              },
+              {
+                "ingredientId": "bread",
+                "estimatedAmount": "4 slices sliced bread"
+              },
+              {
+                "ingredientId": "oil",
+                "estimatedAmount": "1 tablespoon vegetable oil"
+              },
+              {
+                "ingredientId": "salt",
+                "estimatedAmount": "1/4 teaspoon salt"
+              }
+            ],
+            "steps": [
+              "Toast the sliced bread lightly.",
+              "Heat vegetable oil in a skillet and cook the tomatoes for 2 minutes per side.",
+              "Add the spinach and cook until wilted.",
+              "Beat the eggs with salt and pour them into the skillet.",
+              "Cook, folding gently, until the eggs are set.",
+              "Divide the egg mixture between the toasted bread and serve as sandwiches."
+            ]
+          }
+        ],
+        "message": "Three suitable dinner options are provided; choose one."
+      },
+      "validationErrors": [
+        "meal 1: unavailable or excluded ingredient ID eggs",
+        "meal 2: unavailable or excluded ingredient ID eggs",
+        "meal 3: unavailable or excluded ingredient ID eggs"
+      ],
+      "status": "validation-failed",
+      "humanReview": "pending",
+      "elapsedMs": 11291
+    },
+    {
+      "scenarioId": "dietary-exclusions",
+      "input": {
+        "servings": 2,
+        "mealType": "dinner",
+        "dietaryExclusions": [
+          "eggs",
+          "dairy"
+        ],
+        "preference": "Vegan meals only.",
+        "excludedIngredientIds": [
+          "egg",
+          "butter"
+        ],
+        "inventory": [
+          {
+            "id": "tofu",
+            "name": "firm tofu",
+            "stockLevel": "High"
+          },
+          {
+            "id": "mushroom",
+            "name": "mushrooms",
+            "stockLevel": "Medium"
+          },
+          {
+            "id": "carrot",
+            "name": "carrots",
+            "stockLevel": "Medium"
+          },
+          {
+            "id": "rice",
+            "name": "cooked rice",
+            "stockLevel": "High"
+          },
+          {
+            "id": "egg",
+            "name": "eggs",
+            "stockLevel": "High"
+          },
+          {
+            "id": "butter",
+            "name": "butter",
+            "stockLevel": "Medium"
+          }
+        ],
+        "availableStaples": [
+          {
+            "id": "oil",
+            "name": "vegetable oil"
+          },
+          {
+            "id": "salt",
+            "name": "salt"
+          },
+          {
+            "id": "water",
+            "name": "water"
+          }
+        ]
+      },
+      "expectation": "one-to-three-meals",
+      "httpStatus": 200,
+      "returnedModel": "gpt-5.6-luna",
+      "usage": {
+        "input_tokens": 516,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 817,
+        "output_tokens_details": {
+          "reasoning_tokens": 113
+        },
+        "total_tokens": 1333
+      },
+      "responseStatus": "completed",
+      "output": {
+        "meals": [
+          {
+            "name": "Tofu, Mushroom, and Rice Skillet",
+            "summary": "A savory vegan skillet of browned tofu, mushrooms, and cooked rice.",
+            "servings": 2,
+            "cookingMinutes": 20,
+            "ingredients": [
+              {
+                "ingredientId": "tofu",
+                "estimatedAmount": "300 g firm tofu, cubed"
+              },
+              {
+                "ingredientId": "mushroom",
+                "estimatedAmount": "200 g mushrooms, sliced"
+              },
+              {
+                "ingredientId": "rice",
+                "estimatedAmount": "3 cups cooked rice"
+              },
+              {
+                "ingredientId": "oil",
+                "estimatedAmount": "1 tablespoon vegetable oil"
+              },
+              {
+                "ingredientId": "salt",
+                "estimatedAmount": "1/2 teaspoon salt"
+              },
+              {
+                "ingredientId": "water",
+                "estimatedAmount": "2 tablespoons water"
+              }
+            ],
+            "steps": [
+              "Heat the vegetable oil in a large skillet over medium-high heat.",
+              "Add the tofu and salt, then cook for 6–8 minutes, turning until lightly browned.",
+              "Add the mushrooms and cook for 4–5 minutes until softened.",
+              "Stir in the cooked rice and water.",
+              "Cook for 3–4 minutes, stirring until hot and combined."
+            ]
+          },
+          {
+            "name": "Carrot and Tofu Rice Bowl",
+            "summary": "A simple vegan rice bowl with tender carrots and crisp-edged tofu.",
+            "servings": 2,
+            "cookingMinutes": 25,
+            "ingredients": [
+              {
+                "ingredientId": "tofu",
+                "estimatedAmount": "300 g firm tofu, cubed"
+              },
+              {
+                "ingredientId": "carrot",
+                "estimatedAmount": "3 medium carrots, thinly sliced"
+              },
+              {
+                "ingredientId": "rice",
+                "estimatedAmount": "3 cups cooked rice"
+              },
+              {
+                "ingredientId": "oil",
+                "estimatedAmount": "1 tablespoon vegetable oil"
+              },
+              {
+                "ingredientId": "salt",
+                "estimatedAmount": "1/2 teaspoon salt"
+              },
+              {
+                "ingredientId": "water",
+                "estimatedAmount": "1/4 cup water"
+              }
+            ],
+            "steps": [
+              "Heat half the vegetable oil in a skillet over medium-high heat.",
+              "Cook the tofu with half the salt for 6–8 minutes, turning until browned, then set aside.",
+              "Add the remaining oil and carrots, and cook for 4 minutes.",
+              "Add the water, cover, and cook for 5 minutes until the carrots are tender.",
+              "Return the tofu to the skillet, add the cooked rice and remaining salt, and stir until hot."
+            ]
+          },
+          {
+            "name": "Mushroom and Carrot Tofu Rice Stir-Fry",
+            "summary": "A quick vegan stir-fry combining tofu, mushrooms, carrots, and rice.",
+            "servings": 2,
+            "cookingMinutes": 25,
+            "ingredients": [
+              {
+                "ingredientId": "tofu",
+                "estimatedAmount": "250 g firm tofu, cubed"
+              },
+              {
+                "ingredientId": "mushroom",
+                "estimatedAmount": "150 g mushrooms, sliced"
+              },
+              {
+                "ingredientId": "carrot",
+                "estimatedAmount": "2 medium carrots, cut into thin matchsticks"
+              },
+              {
+                "ingredientId": "rice",
+                "estimatedAmount": "3 cups cooked rice"
+              },
+              {
+                "ingredientId": "oil",
+                "estimatedAmount": "1 tablespoon vegetable oil"
+              },
+              {
+                "ingredientId": "salt",
+                "estimatedAmount": "1/2 teaspoon salt"
+              },
+              {
+                "ingredientId": "water",
+                "estimatedAmount": "2 tablespoons water"
+              }
+            ],
+            "steps": [
+              "Heat the vegetable oil in a large skillet or wok over high heat.",
+              "Add the tofu and cook for 5–7 minutes, turning until lightly browned.",
+              "Add the carrots and mushrooms with the salt, then stir-fry for 5 minutes.",
+              "Add the water and cook for 2 minutes until the vegetables soften slightly.",
+              "Stir in the cooked rice and cook for 4–5 minutes until thoroughly heated."
+            ]
+          }
+        ],
+        "message": "All three options are vegan, egg-free, dairy-free, serve two, and use only the listed inventory and staples."
+      },
+      "validationErrors": [],
+      "status": "automated-checks-passed",
+      "humanReview": "pending",
+      "elapsedMs": 8514
+    },
+    {
+      "scenarioId": "no-usable-ingredients",
+      "input": {
+        "servings": 2,
+        "mealType": "dinner",
+        "dietaryExclusions": [],
+        "excludedIngredientIds": [],
+        "inventory": [
+          {
+            "id": "egg",
+            "name": "eggs",
+            "stockLevel": "Empty"
+          }
+        ],
+        "availableStaples": [
+          {
+            "id": "oil",
+            "name": "vegetable oil"
+          },
+          {
+            "id": "salt",
+            "name": "salt"
+          },
+          {
+            "id": "water",
+            "name": "water"
+          }
+        ]
+      },
+      "expectation": "no-meals",
+      "httpStatus": 200,
+      "returnedModel": "gpt-5.6-luna",
+      "usage": {
+        "input_tokens": 420,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0
+        },
+        "output_tokens": 71,
+        "output_tokens_details": {
+          "reasoning_tokens": 22
+        },
+        "total_tokens": 491
+      },
+      "responseStatus": "completed",
+      "output": {
+        "meals": [],
+        "message": "No suitable meal is possible: the only inventory ingredient, eggs, is unavailable, and the available staples alone cannot make a suitable dinner for 2."
+      },
+      "validationErrors": [],
+      "status": "automated-checks-passed",
+      "humanReview": "pending",
+      "elapsedMs": 3623
+    }
+  ],
+  "limitations": "Structural and ingredient-ID checks only. Prose, recipe feasibility, quantities and dietary suitability need human review. Not an end-to-end, safety, load or acceptance test.",
+  "finishedAt": "2026-09-16T13:15:09.177Z",
+  "completedScenarios": 3
+}

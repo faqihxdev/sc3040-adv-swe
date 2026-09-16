@@ -1,0 +1,68 @@
+[
+  {
+    "id": "ordinary-inventory",
+    "description": "Suggest meals from a typical small inventory.",
+    "expectation": "one-to-three-meals",
+    "input": {
+      "servings": 2,
+      "mealType": "dinner",
+      "dietaryExclusions": [],
+      "excludedIngredientIds": [],
+      "inventory": [
+        { "id": "egg", "name": "eggs", "stockLevel": "High" },
+        { "id": "spinach", "name": "spinach", "stockLevel": "Medium" },
+        { "id": "tomato", "name": "tomatoes", "stockLevel": "High" },
+        { "id": "bread", "name": "sliced bread", "stockLevel": "High" }
+      ],
+      "availableStaples": [
+        { "id": "oil", "name": "vegetable oil" },
+        { "id": "salt", "name": "salt" },
+        { "id": "water", "name": "water" }
+      ]
+    }
+  },
+  {
+    "id": "dietary-exclusions",
+    "description": "Generate vegan alternatives while excluding eggs and butter in the inventory.",
+    "expectation": "one-to-three-meals",
+    "input": {
+      "servings": 2,
+      "mealType": "dinner",
+      "dietaryExclusions": ["eggs", "dairy"],
+      "preference": "Vegan meals only.",
+      "excludedIngredientIds": ["egg", "butter"],
+      "inventory": [
+        { "id": "tofu", "name": "firm tofu", "stockLevel": "High" },
+        { "id": "mushroom", "name": "mushrooms", "stockLevel": "Medium" },
+        { "id": "carrot", "name": "carrots", "stockLevel": "Medium" },
+        { "id": "rice", "name": "cooked rice", "stockLevel": "High" },
+        { "id": "egg", "name": "eggs", "stockLevel": "High" },
+        { "id": "butter", "name": "butter", "stockLevel": "Medium" }
+      ],
+      "availableStaples": [
+        { "id": "oil", "name": "vegetable oil" },
+        { "id": "salt", "name": "salt" },
+        { "id": "water", "name": "water" }
+      ]
+    }
+  },
+  {
+    "id": "no-usable-ingredients",
+    "description": "Return no meal when stock is depleted and only salt, oil and water remain.",
+    "expectation": "no-meals",
+    "input": {
+      "servings": 2,
+      "mealType": "dinner",
+      "dietaryExclusions": [],
+      "excludedIngredientIds": [],
+      "inventory": [
+        { "id": "egg", "name": "eggs", "stockLevel": "Empty" }
+      ],
+      "availableStaples": [
+        { "id": "oil", "name": "vegetable oil" },
+        { "id": "salt", "name": "salt" },
+        { "id": "water", "name": "water" }
+      ]
+    }
+  }
+]

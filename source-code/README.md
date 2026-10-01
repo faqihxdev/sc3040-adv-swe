@@ -138,16 +138,17 @@ From `source-code`:
 ```sh
 pnpm exec playwright install --with-deps chromium firefox # First run or Playwright update.
 pnpm db:start
-pnpm db:seed       # First run.
-pnpm check        # Format, lint, types, unit tests, coverage and build.
-pnpm test:db      # Transactional SQL tests.
-pnpm test:browser # Browser workflows; starts its own app on port 3100.
+pnpm db:seed            # First run.
+pnpm check              # Format, lint, types, unit tests, coverage and build.
+pnpm test:db            # Transactional SQL tests.
+pnpm test:browser:smoke # Critical flows on Chromium mobile/desktop.
 ```
 
-SQL tests roll back; browser tests clean up their fixtures and mock AI responses.
+SQL tests roll back. Browser tests start an isolated app on port 3100, clean up
+fixtures and mock AI responses.
 
-Browsers cover Chromium and Firefox at 360×800 and 1366×768. Chromium emulates
-mobile/touch behavior; Firefox uses a narrow viewport.
+Before release, run `pnpm test:browser` for the full Chromium/Firefox matrix at
+360×800 and 1366×768. Chromium emulates mobile/touch; Firefox uses a narrow viewport.
 
 For recovery checks, pause local writes, then run `pnpm db:restore:practice`.
 
@@ -161,11 +162,14 @@ For recovery checks, pause local writes, then run `pnpm db:restore:practice`.
 
 Coverage measures `src/domain` and `src/server/meal-token.ts`.
 
-CI runs these checks on app pushes and PRs:
+CI runs fast checks, SQL and Chromium smoke tests on PRs and pushes to `main`.
+Full release checks run through Actions → App checks → Run workflow → `suite: release`.
+Chromium and Firefox run in separate jobs with one worker and local database each.
 
 1. Open GitHub → Actions → App checks → run → Artifacts.
 2. Download and extract `unit-coverage` for coverage/unit results or
-   `local-integration` for browser/SQL/restore results.
+   `local-smoke` for PR browser/SQL results. Release runs provide
+   `local-release-chromium` and `local-release-firefox`, including restore evidence.
 3. Open the extracted coverage HTML. From `source-code`, run
    `pnpm exec playwright show-report "PATH_TO_REPORT"` with the extracted `playwright-report` folder.
 

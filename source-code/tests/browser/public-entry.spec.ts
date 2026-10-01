@@ -1,6 +1,6 @@
 import { test, expect, signIn } from './fixtures';
 
-test('signed-out entry never streams the private dashboard skeleton', async ({ page }) => {
+test('signed-out entry never streams the private dashboard skeleton @smoke', async ({ page }) => {
   const response = await page.goto('/?view=inventory');
   expect(response).not.toBeNull();
   expect(response!.ok()).toBe(true);

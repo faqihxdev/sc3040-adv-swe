@@ -25,12 +25,16 @@ execution, HTML viewers and CI artifact downloads. Commands run from `source-cod
 | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `pnpm check`               | Format, lint, types, unit results in `reports/unit.xml`, coverage in `coverage/lcov-report/index.html`, production build. Coverage measures domain rules and meal tickets. |
 | `pnpm test:db`             | `reports/database.txt`; three transactional SQL suites.                                                                                                                    |
+| `pnpm test:browser:smoke`  | Six tagged core workflows on Chromium mobile/desktop; browser XML, HTML and environment reports.                                                                           |
 | `pnpm test:browser`        | `reports/browser.xml`, `reports/browser-*.json`, `playwright-report/index.html`; isolated app at port 3100 with mocked AI.                                                 |
 | `pnpm db:restore:practice` | `reports/restore.json`; separate local restore and row/RLS checks.                                                                                                         |
 
 Dated local results and pending review are recorded in [GitHub #49](https://github.com/faqihxdev/sc3040-adv-swe/issues/49).
 
-- CI uses local Supabase; deployment remains manual. Failures include browser screenshots/traces.
+- PRs and pushes to `main` run fast checks, SQL and the Chromium smoke suite once per event. Smoke covers public entry, inventory CRUD/undo, photo review, cooking/analytics, household rejoining and API protection.
+- Manually select `suite: release` in App checks before production deployment. Both browser jobs must pass; each runs its mobile/desktop matrix, SQL and restore practice on a separate local Supabase.
+- Archive `unit-coverage`, `local-release-chromium` and `local-release-firefox` from the same run. Release manifests identify the source commit and evidence hashes. Deployment remains manual.
+- Failures include browser screenshots/traces.
 - Archive acceptance reports with the source commit for one year. CI artifacts expire after 14 days.
 - Reports, credentials and database dumps are ignored by Git.
 - Record defect severity, reproduction, expected/actual result and retest evidence in an issue.

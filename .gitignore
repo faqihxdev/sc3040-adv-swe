@@ -51,3 +51,16 @@ htmlcov/
 # Misc
 *.local
 .cache/
+.next/
+.next-e2e/
+playwright-report/
+test-results/
+reports/
+backups/
+.supabase/
+*.tsbuildinfo
+source-code/app/supabase/.temp/
+source-code/app/supabase/.branches/
+.vercel/
+source-code/app/deployment/supabase/.temp/
+source-code/app/deployment/supabase/.branches/

@@ -1,0 +1,5 @@
+allowBuilds:
+  unrs-resolver: true
+  sharp: true
+  supabase: true
+saveExact: true

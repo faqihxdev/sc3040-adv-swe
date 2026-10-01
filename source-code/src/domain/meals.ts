@@ -81,6 +81,41 @@ export function eligibleItems(
       !matchesExclusion(i.name, exclusions),
   );
 }
+
+function mentionsUnlistedIngredient(
+  text: string,
+  ingredients: { id: string; name: string }[],
+  includedIds: Set<string>,
+) {
+  const prose = normalize(text);
+  const mentions = ingredients
+    .flatMap(({ id, name }) => {
+      const words = normalize(name).split(' ').filter(Boolean);
+      // Allow "rice noodles" for "thick rice noodles", keeping compound names intact.
+      const forms = [
+        words.join(' '),
+        ...words.slice(0, -2).map((_, i) => words.slice(i + 1).join(' ')),
+      ];
+      return forms.filter(Boolean).flatMap((form) => {
+        const singular = form.endsWith('s') && !form.endsWith('ss') ? form.slice(0, -1) : form;
+        const pattern = new RegExp(`\\b${singular}s?\\b`, 'g');
+        return [...prose.matchAll(pattern)].map((match) => ({
+          start: match.index,
+          end: match.index + match[0].length,
+          listed: includedIds.has(id),
+        }));
+      });
+    })
+    .sort((a, b) => b.end - b.start - (a.end - a.start) || Number(b.listed) - Number(a.listed));
+  const covered: { start: number; end: number }[] = [];
+  for (const mention of mentions) {
+    if (covered.some((span) => span.start <= mention.start && span.end >= mention.end)) continue;
+    if (!mention.listed) return true;
+    covered.push(mention);
+  }
+  return false;
+}
+
 export function validateAndRank(
   candidates: unknown[],
   items: Item[],
@@ -121,10 +156,12 @@ export function validateAndRank(
         return [];
       const used = eligible.filter((i) => ids.includes(i.id));
       if (!used.length) return [];
-      // Explicitly reject mentions of known inventory/staples that are not listed.
-      const prose = normalize([meal.summary, ...meal.steps].join(' '));
       if (
-        [...items, ...staples].some((i) => !ids.includes(i.id) && prose.includes(normalize(i.name)))
+        mentionsUnlistedIngredient(
+          [meal.summary, ...meal.steps].join(' '),
+          [...items, ...staples],
+          new Set(ids),
+        )
       )
         return [];
       seen.add(normalize(meal.name));

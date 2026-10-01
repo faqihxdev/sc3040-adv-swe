@@ -7,14 +7,15 @@
 - `system-documentation/`: findings and submission exports.
 - `sprint-backlogs/`: GitHub Projects exports.
 
-These match the lab's four folder categories. Working documents remain in Google Docs.
+Working documents remain in Google Docs.
 See the [feasibility check](system-documentation/feasibility/README.md). Keep keys in the ignored `.env`.
 
-## App
+## Local development
 
-See [UseEatNow setup](source-code/README.md) for the local app and Supabase.
-The app README is the setup reference; cloud-only commands live in
-[deployment notes](system-documentation/deployment.md).
+Start with [UseEatNow setup](source-code/README.md#local-development): prerequisites,
+first-run commands, daily startup and local demo logins. Run commands from `source-code/`.
+Development uses local Supabase. Hosting commands and
+[free-tier limits](system-documentation/deployment.md#free-tier-limits) are in the deployment notes.
 
 ## Contributing
 

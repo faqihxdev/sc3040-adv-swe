@@ -52,9 +52,11 @@ Use these local services:
 
 Ports stay localhost-only. Local data survives stopping and restarting the services.
 
-Local accounts: `alex@useeatnow.test` owns the shared household;
-`sam@useeatnow.test` is a member; `jo@useeatnow.test` has a separate household.
-Their local-only password is `UseEatNow!2026`.
+Local accounts share the local-only password `UseEatNow!2026`:
+
+- `alex@useeatnow.test`: shared household owner.
+- `sam@useeatnow.test`: shared household member.
+- `jo@useeatnow.test`: separate household.
 
 ### Daily startup and shutdown
 
@@ -70,10 +72,11 @@ After pulling dependency/schema changes, repeat install, migrate and types from 
 Seeding is optional after first setup and preserves existing inventory.
 
 The seed has 40 ingredients and synthetic history with relative dates.
-Run `pnpm db:demo` after seeding, then restart the app to use demo-only login.
-It enables Account → Reset to seed, which replaces demo inventory/history but retains accounts.
-Set `DEMO_MODE=false` in `.env.local` and restart to test local signup/recovery.
-If startup fails, check the Docker engine and competing services on ports 3000 or 54320 to 54324.
+
+- Demo mode: run `pnpm db:demo` after seeding and restart the app. Account → Reset
+  to seed replaces demo inventory/history while retaining accounts.
+- Signup/recovery: set `DEMO_MODE=false` in `.env.local` and restart.
+- Startup failure: check Docker and competing services on ports 3000 or 54320 to 54324.
 
 ## Environment files
 
@@ -87,10 +90,13 @@ If startup fails, check the Docker engine and competing services on ports 3000 o
 
 Real credentials are ignored. Only the Supabase URL and anon key may use
 `NEXT_PUBLIC_`; RLS controls database access. Keep AI/admin/signing keys server-side.
+
 AI is off on a fresh setup. For real meal/photo requests, add `OPENAI_API_KEY` to
 `.env.local` or repository-root `.env`, set `AI_ENABLED=true` in `.env.local`, and restart.
+
 Those requests incur OpenAI API charges. Automated tests mock AI responses.
 Models live in `src/server/recommendations.ts` and `photo-recognition.ts`.
+
 `AI_REQUEST_LIMIT` caps request counts. Monitor OpenAI spending separately.
 
 ## Where code lives
@@ -114,26 +120,65 @@ Keep domain rules free of I/O; validate and authorise writes server-side.
 Keep applied migrations unchanged; put schema changes in new migration files.
 Then run `pnpm db:migrate` and `pnpm db:types` to update the database and generated types.
 
-Run `pnpm check` before pushing: format, lint, types, unit/coverage and build.
-With local Supabase running, use `pnpm test:db` for database changes and
-`pnpm test:browser` for workflows/UI. SQL tests roll back; browser tests clean up
-their fixtures, use port 3100 and mock AI responses.
-Tests cover Chromium and Firefox at 360×800 and 1366×768. Chromium also emulates
-mobile/touch behavior; Firefox uses a narrow viewport. Reports include browser/OS versions.
-CI runs unit, database, browser and restore checks on app pushes and PRs.
-CI uses local Supabase; the operator deploys separately. `pnpm format` skips secrets/generated output.
+Before pushing, follow [Run and view tests](#run-and-view-tests).
+`pnpm format` skips secrets/generated output.
+
 Local auth limits live in `supabase/config.toml`, including two emails/hour.
 For heavier email testing, raise local `auth.rate_limit.email_sent`, then run
 `pnpm db:stop` and `pnpm db:start`. Hosted settings are configured separately.
+
 See [test plan and remaining acceptance](../system-documentation/testing.md)
 and [user guide](../system-documentation/user-guide.md).
+
+## Run and view tests
+
+Complete [local setup](#local-development). Stop the dev server before `pnpm check`.
+From `source-code`:
+
+```sh
+pnpm exec playwright install --with-deps chromium firefox # First run or Playwright update.
+pnpm db:start
+pnpm db:seed       # First run.
+pnpm check        # Format, lint, types, unit tests, coverage and build.
+pnpm test:db      # Transactional SQL tests.
+pnpm test:browser # Browser workflows; starts its own app on port 3100.
+```
+
+SQL tests roll back; browser tests clean up their fixtures and mock AI responses.
+
+Browsers cover Chromium and Firefox at 360×800 and 1366×768. Chromium emulates
+mobile/touch behavior; Firefox uses a narrow viewport.
+
+For recovery checks, pause local writes, then run `pnpm db:restore:practice`.
+
+| Report                         | How to view it                                                                                                |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| Browser results                | Run `pnpm exec playwright show-report playwright-report`, then visit [localhost:9323](http://127.0.0.1:9323). |
+| Coverage                       | Open `coverage/lcov-report/index.html` in a browser.                                                          |
+| Unit results                   | Open `reports/unit.xml` in an editor.                                                                         |
+| SQL / restore                  | Open `reports/database.txt` / `reports/restore.json` in an editor.                                            |
+| Browser versions / read timing | Open `reports/browser-*.json` / `reports/load-*.json` in an editor.                                           |
+
+Coverage measures `src/domain` and `src/server/meal-token.ts`.
+
+CI runs these checks on app pushes and PRs:
+
+1. Open GitHub → Actions → App checks → run → Artifacts.
+2. Download and extract `unit-coverage` for coverage/unit results or
+   `local-integration` for browser/SQL/restore results.
+3. Open the extracted coverage HTML. From `source-code`, run
+   `pnpm exec playwright show-report "PATH_TO_REPORT"` with the extracted `playwright-report` folder.
+
+Artifacts expire after 14 days. Archive accepted release reports with their commit ID.
 
 ## Hosted demo
 
 [Open demo](https://useeatnow-sg-demo.vercel.app) · private Alex/Sam accounts.
 Vercel Hobby deploys manually; Supabase Free holds the shared demo database.
 Only the deployment operator needs cloud credentials; teammates use local Supabase.
+
 See [deployment commands](../system-documentation/deployment.md) and
 [Vercel/Supabase free-tier limits](../system-documentation/deployment.md#free-tier-limits).
+
 Hosted quotas apply to the shared deployment. Each developer's local stack runs independently.
 Physical camera capture and email recovery still need device/acceptance checks.

@@ -15,6 +15,7 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:browser": "playwright test",
+    "test:browser:smoke": "playwright test --grep @smoke --project=ChromiumMobile360 --project=ChromiumDesktop1366",
     "test:db": "node scripts/test-db.mjs",
     "check": "node scripts/check.mjs",
     "format": "prettier --write .",

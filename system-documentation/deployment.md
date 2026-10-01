@@ -36,7 +36,8 @@ From `source-code`:
 
 1. Authenticate the Supabase and Vercel CLIs; obtain private `.env.hosted`.
 2. Link Vercel with `pnpm dlx vercel@61.0.0 link --project useeatnow-sg-demo --scope aqilakmal-project`.
-3. Run the required database/configuration steps below. Review each dry run before applying changes.
+3. Complete the [full release checks](#release-checks) for the revision being deployed.
+4. Run the required database/configuration steps below. Review each dry run before applying changes.
 
 ```sh
 node scripts/hosted.mjs link
@@ -53,6 +54,21 @@ node scripts/verify-hosted.mjs
 - Vercel uploads this working directory. `.vercelignore` excludes credentials, backups, reports and local/test tooling.
 - The owner deploys production through the CLI. Deployment preserves existing demo data.
 - The verifier checks landing/login, both accounts, shared access and reset permissions with read-only inventory checks.
+
+## Release checks
+
+From the repository root:
+
+```sh
+gh workflow run app-checks.yml --ref main -f suite=release
+gh run list --workflow app-checks.yml --event workflow_dispatch --branch main --limit 1
+gh run watch RUN_ID --exit-status
+```
+
+Replace `RUN_ID` with the listed run. Confirm its commit matches the checkout being
+deployed and that fast checks plus both browser jobs passed. Download all three
+artifacts and retain them with the release commit. PR smoke checks provide quick
+feedback; this full run is the production release gate.
 
 ## Initial setup / credentials
 

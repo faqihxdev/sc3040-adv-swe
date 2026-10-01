@@ -10,7 +10,7 @@ import {
 } from './fixtures';
 import sharp from 'sharp';
 
-test('UC2 / FR-04–FR-05: required date, preview, add, edit, remove and safe undo', async ({
+test('UC2 / FR-04–FR-05: required date, preview, add, edit, remove and safe undo @smoke', async ({
   page,
   kitchen,
 }) => {
@@ -45,7 +45,7 @@ test('UC2 / FR-04–FR-05: required date, preview, add, edit, remove and safe un
     .toEqual(['Brown rice']);
 });
 
-test('UC2 photo / FR-04: recognition is a draft; stock/date and final confirmation are required', async ({
+test('UC2 photo / FR-04: recognition is a draft; stock/date and final confirmation are required @smoke', async ({
   page,
   kitchen,
 }) => {
@@ -85,7 +85,7 @@ test('UC2 photo / FR-04: recognition is a draft; stock/date and final confirmati
   expect((await state(page)).items[0]).toMatchObject({ stock: 3, expiry_date: '2099-12-31' });
 });
 
-test('UC1/UC3/UC4: recommend, cook, confirm, retry and inspect recorded analytics', async ({
+test('UC1/UC3/UC4: recommend, cook, confirm, retry and inspect recorded analytics @smoke', async ({
   page,
   kitchen,
 }, testInfo) => {
@@ -201,7 +201,7 @@ test('UC1/UC3: provider failure preserves preferences; cancelling a selection sa
   expect((await state(page)).outcomes).toHaveLength(0);
 });
 
-test('UC5/UC6: leave, reject an invalid join code, then immediately rejoin', async ({
+test('UC5/UC6: leave, reject an invalid join code, then immediately rejoin @smoke', async ({
   page,
   kitchen,
 }) => {
@@ -352,7 +352,7 @@ test('FR-09: empty insights states the reporting limit', async ({ page, kitchen 
   ).toBeVisible();
 });
 
-test('API: authentication, origin, JSON validation and forged tickets fail closed', async ({
+test('API: authentication, origin, JSON validation and forged tickets fail closed @smoke', async ({
   page,
   kitchen,
 }) => {

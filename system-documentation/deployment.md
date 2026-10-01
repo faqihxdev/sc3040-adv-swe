@@ -3,7 +3,38 @@
 [UseEatNow](https://useeatnow-sg-demo.vercel.app): Vercel Hobby
 `aqilakmal-project/useeatnow-sg-demo`; Supabase Free `useeatnow-sg-demo`
 (`kskfjituisvwdnlcligy`). Both use Singapore. Cloud credentials stay with the
-deployment operator; local development needs neither cloud account.
+deployment operator. Local development uses generated credentials in `.env.local`.
+
+## Free-tier limits
+
+Verified 1 October 2026.
+
+Vercel Hobby covers personal, non-commercial projects with one owner/developer seat.
+[Hobby](https://vercel.com/docs/plans/hobby), [seats](https://vercel.com/pricing).
+Monthly allowances include 100 GB transfer,
+1M function invocations, 4 CPU-hours and 360 GB-hours memory.
+[Quotas](https://vercel.com/docs/plans/hobby). Hobby has no paid overage;
+exceeding quotas can pause service. [Plans](https://vercel.com/docs/plans).
+Git integration for private organization repositories requires Pro.
+[Git restrictions](https://vercel.com/docs/git#deploying-private-git-repositories).
+
+Supabase Free permits two active projects across organizations where you are
+Owner/Admin. [Project allowance](https://supabase.com/docs/guides/platform/billing-on-supabase).
+It includes 500 MB database/project; organization allowances are 1 GB Storage,
+5 GB egress, 5 GB cached egress and 50,000 MAU.
+[Billing](https://supabase.com/docs/guides/platform/billing-on-supabase),
+[pricing](https://supabase.com/pricing). Projects can pause after seven
+low-activity days. Database backups require manual exports.
+[Pausing](https://supabase.com/docs/guides/platform/free-project-pausing),
+[backups](https://supabase.com/pricing).
+
+Built-in Auth email permits two messages/hour/project, only to organization team
+addresses. [SMTP](https://supabase.com/docs/guides/auth/auth-smtp),
+[rate limits](https://supabase.com/docs/guides/auth/rate-limits).
+Password sign-in has separate Auth rate limits.
+[Password auth](https://supabase.com/docs/guides/auth/passwords).
+Preseeded demo accounts use password sign-in. Local Supabase runs independently
+of hosted quotas. [Local development](https://supabase.com/docs/guides/local-development).
 
 ## Existing deployment
 
@@ -25,10 +56,10 @@ node scripts/verify-hosted.mjs
 
 Review each dry run before applying it. Hosted auth uses
 `deployment/supabase/config.toml`, never the local config. Vercel uploads this
-working directory; automatic GitHub deployment is not configured.
+working directory. The owner deploys production releases through the Vercel CLI.
 `.vercelignore` excludes credentials, backups, reports and local/test tooling.
-The verifier checks landing/login, both accounts, shared access and reset permissions.
-It does not call AI or alter inventory. Deployment does not reset existing demo data.
+The verifier checks landing/login, both accounts, shared access and reset permissions
+with read-only inventory checks. Deployment preserves existing demo data.
 
 ## Initial setup / credentials
 
@@ -38,7 +69,7 @@ Alex/Sam accounts and preserves existing inventory. Run
 `node scripts/configure-demo-reset.mjs --hosted`, then `hosted.mjs credentials`
 to save private demo logins. `node scripts/vercel-env.mjs` adds initial Vercel
 production variables via stdin and rejects existing names. It reads the AI key
-from repository-root `.env`; `.env.hosted` does not need a duplicate AI key.
+from repository-root `.env`.
 
 For rotated keys, update Vercel Production environment variables and redeploy.
 For a changed domain, use `hosted.mjs origin <https://…vercel.app>`, reapply hosted
@@ -49,7 +80,7 @@ auth config, and update Vercel `APP_ORIGIN` before redeploying.
 Registration is disabled; passwords are in ignored `.demo-credentials.local`.
 Account → Reset to seed refreshes synthetic inventory/history with rolling dates;
 only the allowlisted owner can reset. Accounts, membership and AI usage survive.
-The AI request cap is not a dollar spending guarantee. Keep database backups;
+Monitor OpenAI spending separately from the app's request-count cap. Keep database backups;
 inactive Free projects can pause. Hosted signup/recovery needs custom SMTP.
 
 ## Backup / recovery
@@ -68,8 +99,8 @@ pnpm db:restore:practice
 
 The helper dumps the local database to ignored `backups/`, restores into a new
 temporary database in the same cluster, compares data fingerprints/counts/RLS and removes only that
-temporary target. It leaves the source untouched. This tests local recovery,
-not hosted recovery, role recreation, SMTP/settings or the stated recovery objectives.
+temporary target. The drill covers local data, fingerprints and RLS. Validate
+hosted recovery, role recreation, SMTP/settings and recovery objectives separately.
 
 For hosted exports, use the official [Supabase backup/restore procedure](https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore):
 roles, schema **and data**, plus migration history. A default CLI dump is schema-only;
@@ -83,13 +114,12 @@ not include external secrets/settings or Storage binaries; this app does not per
 
 After review and a clean commit, run `pnpm release:manifest`. Archive its commit,
 lock/config/migration hashes and test evidence with the **applied** migration list
-for the target (`node scripts/hosted.mjs migration-list`); repository migration
-files alone do not prove applied state.
+for the target (`node scripts/hosted.mjs migration-list`).
 Retain the prior working Vercel deployment and database backup before release.
 
 Deploy manually, then smoke-test login, inventory write/undo and one live meal
-request/confirmation. Live AI smoke requires operator approval/budget; mocks are
-not release evidence. Record defects and the released deployment URL/commit.
+request/confirmation. Live AI smoke requires operator approval/budget.
+Record live test results, defects and the released deployment URL/commit.
 
 On failure, stop writes. Revert to the known-good Vercel deployment only if its
 code remains compatible with the current schema; otherwise use a reviewed

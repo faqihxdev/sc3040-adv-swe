@@ -3,8 +3,9 @@
 Baseline: [current SRS](https://docs.google.com/document/d/1LWbJvVtaW_9C6HRl_6uyKmaQoQkqZhZctSjvV1MEotk/edit),
 [SQAP v1.0](https://docs.google.com/document/d/1wqew1x-gv-KgmVl2rgC-CjaPcVROooq9/edit),
 reviewed 1 October 2026. This is the executable test plan; retain a reviewed
-export with the Lab 5 submission. A mapped requirement is **not** automatically
-an accepted requirement.
+export with the Lab 5 submission.
+
+Mapped requirements still require reviewer acceptance.
 
 ## Approach and release criteria
 
@@ -17,23 +18,22 @@ an accepted requirement.
 
 ## Execution and evidence
 
-From `source-code`, after `pnpm db:start` and `pnpm db:seed`:
+Follow [Run and view tests](../source-code/README.md#run-and-view-tests) for setup,
+execution, HTML viewers and CI artifact downloads. Commands run from `source-code`.
 
-| Command                    | Evidence / scope                                                                                                                                                    |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm check`               | Format, lint, types, unit tests with `reports/unit.xml`, `coverage/`, production build. Coverage measures domain rules and meal tickets, not the whole application. |
-| `pnpm test:db`             | `reports/database.txt`; three transactional SQL suites.                                                                                                             |
-| `pnpm test:browser`        | `reports/browser.xml`, `reports/browser-*.json`, `playwright-report/`; isolated app at port 3100 with no AI key.                                                    |
-| `pnpm db:restore:practice` | `reports/restore.json`; separate local restore and row/RLS checks.                                                                                                  |
+| Command                    | Evidence / scope                                                                                                                                                           |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm check`               | Format, lint, types, unit results in `reports/unit.xml`, coverage in `coverage/lcov-report/index.html`, production build. Coverage measures domain rules and meal tickets. |
+| `pnpm test:db`             | `reports/database.txt`; three transactional SQL suites.                                                                                                                    |
+| `pnpm test:browser`        | `reports/browser.xml`, `reports/browser-*.json`, `playwright-report/index.html`; isolated app at port 3100 with mocked AI.                                                 |
+| `pnpm db:restore:practice` | `reports/restore.json`; separate local restore and row/RLS checks.                                                                                                         |
 
 Dated local results and pending review are recorded in [GitHub #49](https://github.com/faqihxdev/sc3040-adv-swe/issues/49).
 
-CI runs these checks without cloud secrets; deployment remains manual. Failures
-include browser screenshots/traces. Archive acceptance reports with the source
-commit for one year; CI downloads expire after 14 days. Reports, credentials
-and database dumps are ignored by Git. Record defect severity, reproduction,
-expected/actual result and retest evidence in an issue; do not equate green CI
-with final acceptance.
+- CI uses local Supabase; deployment remains manual. Failures include browser screenshots/traces.
+- Archive acceptance reports with the source commit for one year. CI artifacts expire after 14 days.
+- Reports, credentials and database dumps are ignored by Git.
+- Record defect severity, reproduction, expected/actual result and retest evidence in an issue.
 
 ## Test cases
 

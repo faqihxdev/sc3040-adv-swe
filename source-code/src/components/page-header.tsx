@@ -14,7 +14,7 @@ export function PageHeader({
   artwork?: 'inventory' | 'cook' | 'insights' | 'household' | 'account';
 }) {
   return (
-    <header className="page-header relative isolate flex flex-wrap items-center justify-between gap-3 px-2 py-2 sm:px-0">
+    <header className="page-header relative isolate flex flex-wrap items-center justify-between gap-3 py-2">
       <span className="page-header-art" data-artwork={artwork} aria-hidden="true" />
       <div className="relative min-w-0">
         <h1

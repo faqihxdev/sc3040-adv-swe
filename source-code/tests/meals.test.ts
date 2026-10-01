@@ -9,6 +9,7 @@ import {
 } from '@/domain/meals';
 import { commandSchema, dateSchema, recipeSchema } from '@/domain/model';
 import { ingredient, recipe, request, today } from './rules-fixtures';
+import { demoIngredients } from '@/domain/demo-data';
 
 describe('FR01 / PR03: deterministic eligibility and scoring', () => {
   test.each([
@@ -100,6 +101,108 @@ describe('FR01 / PR03: deterministic eligibility and scoring', () => {
 });
 
 describe('FR02 / PR04: candidate validation', () => {
+  test.each([
+    ['Coconut milk', 'Milk', 'Warm the coconut milk.'],
+    ['Spring onions', 'Onion', 'Chop the spring onions.'],
+    ['Thick rice noodles', 'Rice', 'Boil the thick rice noodles.'],
+    ['Thick rice noodles', 'Rice', 'Boil the rice noodles.'],
+    ['Cooking oil', 'Oil', 'Heat the cooking oil.'],
+  ])('keeps a listed %s distinct from unlisted %s', (name, unusedName, step) => {
+    const items = [ingredient('used', { name }), ingredient('unused', { name: unusedName })];
+    const candidate = recipe(['used'], { steps: [step, 'Stir.', 'Cook.', 'Serve.'] });
+    expect(validateAndRank([candidate], items, [], request, [], today)).toHaveLength(1);
+  });
+  test('matches whole ingredient words rather than oil inside boil', () => {
+    expect(
+      validateAndRank(
+        [recipe(['rice'], { steps: ['Boil.', 'Stir.', 'Cook.', 'Serve.'] })],
+        [ingredient('rice', { name: 'Rice' }), ingredient('oil', { name: 'Oil' })],
+        [],
+        request,
+        [],
+        today,
+      ),
+    ).toHaveLength(1);
+  });
+  test.each([
+    ['Coconut milk', 'Milk', 'Warm coconut milk, then add milk.'],
+    ['Milk', 'Coconut milk', 'Warm the coconut milk.'],
+    ['Spring onions', 'Onion', 'Chop spring onions and onions.'],
+    ['Rice', 'Thick rice noodles', 'Boil the thick rice noodles.'],
+    ['Chicken rice', 'Rice noodles', 'Serve chicken rice noodles.'],
+  ])('still rejects an actual unlisted ingredient beside %s', (name, unusedName, step) => {
+    expect(
+      validateAndRank(
+        [recipe(['used'], { steps: [step, 'Stir.', 'Cook.', 'Serve.'] })],
+        [ingredient('used', { name }), ingredient('unused', { name: unusedName })],
+        [],
+        request,
+        [],
+        today,
+      ),
+    ).toEqual([]);
+  });
+  test('identical ingredient labels use the explicitly listed ID', () => {
+    const items = [ingredient('used', { name: 'Rice' }), ingredient('unused', { name: 'Rice' })];
+    const [meal] = validateAndRank(
+      [recipe(['used'], { steps: ['Boil the rice.', 'Stir.', 'Cook.', 'Serve.'] })],
+      items,
+      [],
+      request,
+      [],
+      today,
+    );
+    expect(meal?.trackedItems.map((item) => item.id)).toEqual(['used']);
+  });
+  test('retains three feasible meals with the full 40-ingredient demo inventory', () => {
+    const items = demoIngredients.map(([name, stock], index) =>
+      ingredient(`demo-${index}`, { name, stock }),
+    );
+    const staples = [
+      { id: 'water', name: 'Water' },
+      { id: 'oil', name: 'Cooking oil' },
+    ];
+    const id = (name: string) => [...items, ...staples].find((item) => item.name === name)!.id;
+    const laksa = recipe(
+      [
+        'Thick rice noodles',
+        'Laksa paste',
+        'Coconut milk',
+        'Prawns',
+        'Tofu puffs',
+        'Bean sprouts',
+        'Laksa leaves',
+        'Water',
+      ].map(id),
+      {
+        name: 'Prawn and Tofu Puff Laksa Noodles',
+        summary:
+          'Rice noodles in a coconut laksa broth with prawns, tofu puffs, bean sprouts and laksa leaves.',
+        steps: [
+          'Prepare the rice noodles.',
+          'Stir laksa paste with water.',
+          'Add coconut milk, tofu puffs and prawns.',
+          'Serve over bean sprouts with laksa leaves.',
+        ],
+      },
+    );
+    const friedRice = recipe(['Rice', 'Eggs', 'Spring onions', 'Cooking oil'].map(id), {
+      name: 'Egg fried rice',
+      steps: [
+        'Prepare rice.',
+        'Chop spring onions.',
+        'Heat cooking oil and scramble eggs.',
+        'Stir in rice and spring onions.',
+      ],
+    });
+    const pasta = recipe(['Pasta', 'Canned tuna', 'Tomato passata'].map(id), {
+      name: 'Tomato tuna pasta',
+      steps: ['Prepare pasta.', 'Warm tomato passata.', 'Fold in canned tuna.', 'Toss and serve.'],
+    });
+    expect(
+      validateAndRank([laksa, friedRice, pasta], items, staples, request, [], today),
+    ).toHaveLength(3);
+  });
   test.each([
     recipe(['a'], { servings: 3 }),
     recipe(['a'], { steps: ['Only one step'] }),

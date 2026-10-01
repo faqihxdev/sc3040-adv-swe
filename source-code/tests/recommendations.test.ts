@@ -31,6 +31,7 @@ const kitchen: AppState = {
   aiEnabled: true,
 };
 beforeEach(() => {
+  mocks.generate.mockReset();
   vi.useFakeTimers();
   vi.setSystemTime(new Date('2026-10-01T02:00:00Z'));
   vi.stubEnv('AI_ENABLED', 'true');
@@ -43,6 +44,7 @@ beforeEach(() => {
   });
 });
 afterEach(() => {
+  vi.restoreAllMocks();
   vi.useRealTimers();
   vi.unstubAllEnvs();
 });
@@ -81,6 +83,127 @@ describe('recommender boundary (mocked external provider)', () => {
     expect(mocks.generate.mock.calls[0][0]).not.toHaveProperty('tools');
     expect(mocks.rpc.mock.calls.map((call) => call[0])).toEqual(['reserve_ai', 'record_ai_usage']);
     expect(kitchen.items[0].stock).toBe(3);
+  });
+  test('requests three feasible options while allowing genuinely limited inventory', async () => {
+    await recommend(kitchen, request);
+    const options = mocks.generate.mock.calls[0][0];
+    expect(options.system).toContain('Return three distinct feasible meals');
+    expect(options.system).toContain('If fewer than three');
+    expect(options.system).toContain('brief reason in message');
+  });
+  test('preserves the reason for fewer feasible options', async () => {
+    mocks.generate.mockResolvedValue({
+      output: {
+        meals: [recipe([rice.id])],
+        message: 'Only one feasible meal fits the available ingredients.',
+      },
+      usage: {},
+    });
+    const result = await recommend(kitchen, request);
+    expect(result.meals).toHaveLength(1);
+    expect(result.message).toBe('Only one feasible meal fits the available ingredients.');
+    expect(mocks.generate).toHaveBeenCalledTimes(1);
+  });
+  test.each([0, 1, 2, 3])(
+    'accepts %i feasible options without an unnecessary repair',
+    async (count) => {
+      mocks.generate.mockResolvedValue({
+        output: {
+          meals: Array.from({ length: count }, (_, index) =>
+            recipe([rice.id], { name: `Option ${index + 1}` }),
+          ),
+          message: '',
+        },
+        usage: {},
+      });
+      const result = await recommend(kitchen, request);
+      expect(result.meals).toHaveLength(count);
+      expect(mocks.generate).toHaveBeenCalledTimes(1);
+      expect(Boolean(result.message)).toBe(count < 3);
+    },
+  );
+  test('allows slower responses while keeping both attempts within one request deadline', async () => {
+    const timeout = vi
+      .spyOn(AbortSignal, 'timeout')
+      .mockImplementation(() => new AbortController().signal);
+    mocks.generate.mockImplementationOnce(async () => {
+      vi.advanceTimersByTime(30_000);
+      return {
+        output: { meals: [recipe(['unknown'])], message: '' },
+        usage: {},
+      };
+    });
+    expect((await recommend(kitchen, request)).meals).toHaveLength(1);
+    expect(timeout.mock.calls.map(([milliseconds]) => milliseconds)).toEqual([35_000, 20_000]);
+  });
+  test('explains partial validation results without showing rejected recipes', async () => {
+    mocks.generate.mockResolvedValue({
+      output: {
+        meals: [recipe([rice.id]), recipe(['unknown'], { name: 'Invalid' })],
+        message: 'Two feasible options.',
+      },
+      usage: {},
+    });
+    const result = await recommend(kitchen, request);
+    expect(result.meals).toHaveLength(1);
+    expect(result.message).toBe('1 suggestion passed ingredient and exclusion checks.');
+  });
+  test('repairs rejected candidates once, retains valid meals and records combined usage', async () => {
+    mocks.generate
+      .mockResolvedValueOnce({
+        output: {
+          meals: [recipe([rice.id], { name: 'First' }), recipe(['unknown'], { name: 'Rejected' })],
+          message: '',
+        },
+        usage: { inputTokens: 100, outputTokens: 200 },
+      })
+      .mockResolvedValueOnce({
+        output: {
+          meals: [recipe([rice.id], { name: 'Second' }), recipe([rice.id], { name: 'Third' })],
+          message: '',
+        },
+        usage: { inputTokens: 300, outputTokens: 400 },
+      });
+    const result = await recommend(kitchen, request);
+    expect(result.meals.map((meal) => meal.name)).toEqual(['First', 'Second', 'Third']);
+    expect(result.message).toBe('');
+    expect(mocks.generate).toHaveBeenCalledTimes(2);
+    const repair = JSON.parse(mocks.generate.mock.calls[1][0].prompt).repair;
+    expect(repair).toMatchObject({ acceptedMealNames: ['First'] });
+    expect(repair.previousMeals).toHaveLength(2);
+    expect(mocks.rpc.mock.calls.filter((call) => call[0] === 'reserve_ai')).toHaveLength(1);
+    expect(mocks.rpc).toHaveBeenLastCalledWith('record_ai_usage', {
+      call_id: 'reservation',
+      inputs: 400,
+      outputs: 600,
+    });
+    expect(kitchen.items[0].stock).toBe(3);
+  });
+  test('a failed repair keeps the valid first-pass meal', async () => {
+    mocks.generate
+      .mockResolvedValueOnce({
+        output: {
+          meals: [recipe([rice.id]), recipe(['unknown'], { name: 'Rejected' })],
+          message: '',
+        },
+        usage: { inputTokens: 100, outputTokens: 200 },
+      })
+      .mockRejectedValueOnce(new Error('Repair unavailable'));
+    const result = await recommend(kitchen, request);
+    expect(result.meals).toHaveLength(1);
+    expect(result.message).toBe('1 suggestion passed ingredient and exclusion checks.');
+    expect(mocks.generate).toHaveBeenCalledTimes(2);
+  });
+  test('a malformed-output retry shares the same two-call limit as validation repair', async () => {
+    mocks.generate.mockRejectedValueOnce(mocks.malformed).mockResolvedValueOnce({
+      output: {
+        meals: [recipe([rice.id]), recipe(['unknown'], { name: 'Rejected' })],
+        message: '',
+      },
+      usage: {},
+    });
+    expect((await recommend(kitchen, request)).meals).toHaveLength(1);
+    expect(mocks.generate).toHaveBeenCalledTimes(2);
   });
   test('unrecognised ingredient IDs never reach the user', async () => {
     mocks.generate.mockResolvedValue({

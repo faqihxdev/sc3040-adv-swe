@@ -172,7 +172,12 @@ test('UC1/UC3: provider failure preserves preferences; cancelling a selection sa
     return route.fulfill(
       calls === 1
         ? { status: 502, json: { error: 'Provider unavailable. Try again.' } }
-        : { json: { meals: [mealFixture(kitchen, rice)], message: '' } },
+        : {
+            json: {
+              meals: [mealFixture(kitchen, rice)],
+              message: 'Only one feasible meal fits the available ingredients.',
+            },
+          },
     );
   });
   await page.reload();
@@ -186,6 +191,9 @@ test('UC1/UC3: provider failure preserves preferences; cancelling a selection sa
     page.getByRole('textbox', { name: 'Preferences (optional)', exact: true }),
   ).toHaveValue('Warm meal');
   await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Only one feasible meal' }),
+  ).toBeVisible();
   await page.getByRole('button', { name: 'Cook this', exact: true }).click();
   await page.getByRole('button', { name: 'End session', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'End session', exact: true }).click();

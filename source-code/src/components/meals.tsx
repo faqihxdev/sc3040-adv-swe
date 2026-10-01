@@ -203,6 +203,11 @@ export function Meals({
           )}
           {meals.length ? (
             <>
+              {notice && (
+                <p role="status" className="helper">
+                  {notice}
+                </p>
+              )}
               <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                 {meals.map((meal, index) => (
                   <article key={meal.token} className="panel flex min-w-0 flex-col">

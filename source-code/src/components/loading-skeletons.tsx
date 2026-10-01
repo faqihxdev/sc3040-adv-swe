@@ -31,25 +31,3 @@ export function AnalyticsSkeleton() {
     </section>
   );
 }
-
-export function MealSkeleton() {
-  return (
-    <section className="space-y-5" role="status" aria-label="Finding meals">
-      <p className="text-sm text-muted-foreground">Finding meals and checking your preferences…</p>
-      <div aria-hidden="true" className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {[0, 1, 2].map((key) => (
-          <div key={key} className="panel space-y-5">
-            <Skeleton className="h-6 w-36" />
-            <Skeleton className="h-6 w-4/5" />
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-2/3" />
-            </div>
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-11 w-28" />
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}

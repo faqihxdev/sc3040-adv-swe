@@ -11,7 +11,7 @@ export const MODEL = 'gpt-5.6-luna';
 export const REASONING = 'medium';
 const MAX_OUTPUT_TOKENS = 6000;
 const TIMEOUT_MS = 60000;
-const repo = new URL('../../', import.meta.url);
+const repo = new URL('../../../', import.meta.url);
 const string = { type: 'string', minLength: 1 };
 const object = (properties) => ({
   type: 'object', properties, required: Object.keys(properties), additionalProperties: false,

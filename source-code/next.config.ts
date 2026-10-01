@@ -2,7 +2,7 @@ import type { NextConfig } from 'next';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 // The existing development key stays in the ignored repository-root .env.
-const rootEnv = resolve(process.cwd(), '../../.env');
+const rootEnv = resolve(process.cwd(), '../.env');
 if (existsSync(rootEnv)) process.loadEnvFile(rootEnv);
 const config: NextConfig = {
   distDir: process.env.USEEATNOW_TEST_BUILD === 'true' ? '.next-e2e' : '.next',

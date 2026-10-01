@@ -1,0 +1,58 @@
+{
+  "date": "2026-09-30",
+  "model": "gpt-6-luna",
+  "reasoning": "low",
+  "cases": [
+    {
+      "file": "vegetables.jpg",
+      "names": ["Red onion", "Tomatoes", "Red bell pepper"],
+      "inputTokens": 671,
+      "outputTokens": 156
+    },
+    {
+      "file": "dairy.jpg",
+      "names": ["Eggs", "Milk", "Butter"],
+      "uncertain": ["Butter"],
+      "inputTokens": 1268,
+      "outputTokens": 61
+    },
+    {
+      "file": "no-food.jpg",
+      "names": [],
+      "message": "The image is blank, so no food items are identifiable.",
+      "inputTokens": 388,
+      "outputTokens": 30
+    },
+    {
+      "file": "grocery.jpg",
+      "names": [
+        "Kiwi",
+        "Pears",
+        "Pomegranates",
+        "Oranges",
+        "Clementines",
+        "Melons",
+        "Carrots",
+        "Leafy greens"
+      ],
+      "uncertain": ["Melons", "Leafy greens"],
+      "hasMore": false,
+      "inputTokens": 1672,
+      "outputTokens": 333
+    }
+  ],
+  "checks": {
+    "noAutomaticInventoryWrites": true,
+    "manualStockAndExpiryRequired": true,
+    "reviewAndBulkSave": true,
+    "batchUndoRestoredInventory": true,
+    "mockedProviderFailure": true,
+    "cancelledRequest": true,
+    "maximumTenRows": true,
+    "desktopDropOneFile": true,
+    "desktopDropMultipleRejected": true,
+    "layouts": ["Laptop L 1440x900", "Pixel 8 412x915"],
+    "themes": ["light", "dark"],
+    "physicalCameraTested": false
+  }
+}

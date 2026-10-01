@@ -1,0 +1,1 @@
+-- Synthetic accounts and history are created explicitly with pnpm db:seed.

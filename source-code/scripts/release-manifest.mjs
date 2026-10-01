@@ -13,8 +13,10 @@ const source = git(
   '--porcelain',
   '--',
   '.',
-  '../../system-documentation',
-  '../../.github',
+  '../system-documentation',
+  '../.github',
+  '../README.md',
+  '../.gitignore',
 );
 if (source)
   throw new Error(
@@ -43,8 +45,12 @@ const manifest = {
     'browser.xml',
     'database.txt',
     'restore.json',
-    'load-LaptopL.json',
-    'load-Pixel8.json',
+    ...[
+      'ChromiumMobile360',
+      'ChromiumDesktop1366',
+      'FirefoxMobile360',
+      'FirefoxDesktop1366',
+    ].flatMap((profile) => [`browser-${profile}.json`, `load-${profile}.json`]),
   ]
     .filter((name) => {
       try {

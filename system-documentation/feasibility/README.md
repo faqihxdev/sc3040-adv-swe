@@ -2,6 +2,8 @@
 
 16 September 2026. Luna medium, Node.js 24.15.0, Windows x64. Three synthetic cases per run.
 
+Archived [runner and scenarios](check/README.md). Current app code is in `source-code/`.
+
 | Run and raw data | Automated checks | Response times |
 | --- | --- | --- |
 | [Baseline](results/2026-09-16T13-14-45-743Z.json) | 2/3 passed | 3.6–11.3 s |

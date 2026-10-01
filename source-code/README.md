@@ -36,7 +36,7 @@ Set `DEMO_MODE=false` in `.env.local` to test signup/recovery.
 | ------------------------- | ----------------------------------------------------------------- |
 | `.env.example`            | Safe placeholders; allowed in Git.                                |
 | `.env.local`              | Local Supabase keys, signing secret and runtime flags; generated. |
-| `../../.env`              | Optional server-only `OPENAI_API_KEY` fallback.                   |
+| `../.env`                 | Optional server-only `OPENAI_API_KEY` fallback.                   |
 | `.env.hosted`             | Hosted Supabase/admin configuration; deployment operator only.    |
 | `.demo-credentials.local` | Hosted demo passwords; share privately.                           |
 
@@ -75,13 +75,13 @@ Tests cover Chromium and Firefox at 360×800 and 1366×768. Firefox checks a nar
 viewport, not mobile emulation. Reports include browser/OS versions.
 CI runs unit, database, browser and restore checks on app pushes and PRs.
 It uses no cloud credentials and does not deploy. `pnpm format` skips secrets/generated output.
-See [test plan and remaining acceptance](../../system-documentation/testing.md)
-and [user guide](../../system-documentation/user-guide.md).
+See [test plan and remaining acceptance](../system-documentation/testing.md)
+and [user guide](../system-documentation/user-guide.md).
 
 ## Hosted demo
 
 [Open demo](https://useeatnow-sg-demo.vercel.app) · private Alex/Sam accounts.
 Vercel Hobby deploys manually; Supabase Free holds the shared demo database.
 Only the deployment operator needs cloud credentials; teammates use local Supabase.
-See [deployment commands and limits](../../system-documentation/deployment.md).
+See [deployment commands and limits](../system-documentation/deployment.md).
 Physical camera capture and email recovery still need device/acceptance checks.

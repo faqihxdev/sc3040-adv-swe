@@ -59,8 +59,8 @@ reports/
 backups/
 .supabase/
 *.tsbuildinfo
-source-code/app/supabase/.temp/
-source-code/app/supabase/.branches/
+source-code/supabase/.temp/
+source-code/supabase/.branches/
 .vercel/
-source-code/app/deployment/supabase/.temp/
-source-code/app/deployment/supabase/.branches/
+source-code/deployment/supabase/.temp/
+source-code/deployment/supabase/.branches/

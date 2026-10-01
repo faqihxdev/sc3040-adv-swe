@@ -7,7 +7,7 @@ deployment operator; local development needs neither cloud account.
 
 ## Existing deployment
 
-From `source-code/app`, authenticate the Supabase and Vercel CLIs. Obtain private
+From `source-code`, authenticate the Supabase and Vercel CLIs. Obtain private
 `.env.hosted` and link the existing project with
 `pnpm dlx vercel@61.0.0 link --project useeatnow-sg-demo --scope aqilakmal-project`.
 Never commit credentials. Run only the database/configuration steps needed:

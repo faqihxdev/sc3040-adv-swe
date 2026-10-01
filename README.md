@@ -22,4 +22,4 @@ Development uses local Supabase. Hosting commands and
 - Branch: `<name>/<type>-<short-description>`
 - PR title and commit subject: `<type>: <short description>`
 - Types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`
-- Before an app PR: run `pnpm check` from `source-code`.
+- Before an app PR: run `pnpm check`, `pnpm test:db` and `pnpm test:browser:smoke` from `source-code` with local Supabase running.

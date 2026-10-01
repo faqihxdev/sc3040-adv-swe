@@ -2,21 +2,31 @@ name: App checks
 
 on:
   push:
+    branches: [main]
     paths:
       - "source-code/**"
       - ".github/workflows/app-checks.yml"
+      - ".gitattributes"
   pull_request:
     paths:
       - "source-code/**"
       - ".github/workflows/app-checks.yml"
+      - ".gitattributes"
   workflow_dispatch:
+    inputs:
+      suite:
+        description: Test suite
+        type: choice
+        options: [release, smoke]
+        default: release
+        required: true
 
 permissions:
   contents: read
 
 concurrency:
-  group: app-checks-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: app-checks-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}-${{ inputs.suite || 'smoke' }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
 
 jobs:
   check:
@@ -47,6 +57,7 @@ jobs:
           retention-days: 14
 
   integration:
+    if: github.event_name != 'workflow_dispatch' || inputs.suite == 'smoke'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     defaults:
@@ -63,22 +74,69 @@ jobs:
           cache: true
           cache_dependency_path: source-code/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright install --with-deps chromium firefox
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm db:start
+      - run: pnpm db:seed
+      - run: pnpm test:db
+      - run: pnpm test:browser:smoke
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: always()
+        with:
+          name: local-smoke
+          path: |
+            source-code/reports/browser.xml
+            source-code/reports/browser-*.json
+            source-code/reports/database.txt
+            source-code/playwright-report/
+          retention-days: 14
+      - run: pnpm db:stop
+        if: always()
+
+  release:
+    if: github.event_name == 'workflow_dispatch' && inputs.suite == 'release'
+    name: release (${{ matrix.browser }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - browser: chromium
+            projects: --project=ChromiumMobile360 --project=ChromiumDesktop1366
+          - browser: firefox
+            projects: --project=FirefoxMobile360 --project=FirefoxDesktop1366
+    defaults:
+      run:
+        working-directory: source-code
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+        with:
+          package_json_file: source-code/package.json
+          cache: true
+          cache_dependency_path: source-code/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
       - run: pnpm db:start
       - run: pnpm db:seed
       - run: pnpm test:db
       - run: pnpm db:restore:practice
-      - run: pnpm test:browser
+      - run: pnpm test:browser ${{ matrix.projects }}
+      - run: pnpm release:manifest
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
         with:
-          name: local-integration
+          name: local-release-${{ matrix.browser }}
           path: |
             source-code/reports/browser.xml
             source-code/reports/browser-*.json
             source-code/reports/database.txt
             source-code/reports/restore.json
             source-code/reports/load-*.json
+            source-code/reports/release-manifest.json
             source-code/playwright-report/
           retention-days: 14
       - run: pnpm db:stop

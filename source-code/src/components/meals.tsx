@@ -1,6 +1,6 @@
 'use client';
 import { PageHeader } from './page-header';
-import { MealSkeleton } from './loading-skeletons';
+import { MealGenerationLoading } from './meal-generation-loading';
 import { PageActions } from './page-actions';
 import { MealPreferences } from './meal-preferences';
 import { SelectField } from './ui/select-field';
@@ -186,7 +186,7 @@ export function Meals({
           </aside>
         </div>
       ) : busy ? (
-        <MealSkeleton />
+        <MealGenerationLoading />
       ) : (
         <div className="space-y-5">
           {error && (

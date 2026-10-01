@@ -1,0 +1,14 @@
+# Hosted demo only. Do not push the local-development config to this project.
+project_id = "useeatnow-sg-demo"
+
+[auth]
+site_url = "env(APP_ORIGIN)"
+additional_redirect_urls = ["env(AUTH_CALLBACK_URL)", "env(AUTH_RECOVERY_URL)"]
+enable_signup = false
+minimum_password_length = 12
+
+[auth.email]
+# Keep the email/password provider enabled. The global flag blocks registration.
+enable_signup = true
+enable_confirmations = true
+secure_password_change = true

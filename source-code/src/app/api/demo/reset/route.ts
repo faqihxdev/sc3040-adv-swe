@@ -36,6 +36,7 @@ export async function POST(request: Request) {
         ...outcome,
         actor_id: state.members[n % state.members.length]?.id ?? state.user.id,
       })) as unknown as Json,
+      events_data: seed.events as unknown as Json,
     });
     if (error) databaseError(error);
     try {

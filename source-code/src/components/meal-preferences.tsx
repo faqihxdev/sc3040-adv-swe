@@ -3,6 +3,7 @@
 import { useId, type FormEvent } from 'react';
 import { ArrowRight } from 'lucide-react';
 import type { AppState, MealRequest } from '@/domain/model';
+import { formatQuantity } from '@/domain/quantities';
 import { eligibleItems, todaySingapore, matchesExclusion } from '@/domain/meals';
 import { commonStaples } from '@/domain/staples';
 import { Modal } from './common';
@@ -168,7 +169,12 @@ export function MealPreferences({
                   })
                 }
               >
-                {item.name}
+                <span className="flex min-w-0 flex-1 items-center justify-between gap-3">
+                  <span className="truncate">{item.name}</span>
+                  <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                    {formatQuantity(item.quantity ?? null, item.unit ?? null)}
+                  </span>
+                </span>
               </Choice>
             ))}
           </div>
@@ -177,7 +183,7 @@ export function MealPreferences({
           <p className="text-sm text-muted-foreground sm:col-span-2" role="status">
             {available.length
               ? 'Select at least one ingredient.'
-              : 'Add stocked ingredients with current expiry dates that meet your exclusions.'}
+              : 'Add ingredients with measured amounts and current expiry dates that meet your exclusions.'}
           </p>
         )}
         {!state.aiEnabled && (

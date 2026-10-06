@@ -11,20 +11,28 @@ function Skeleton({ className }: { className?: string }) {
 
 export function AnalyticsSkeleton() {
   return (
-    <section className="space-y-6" role="status" aria-label="Loading insights">
+    <section
+      className="space-y-4 [&>.page-header]:min-h-20"
+      role="status"
+      aria-label="Loading insights"
+    >
       <PageHeader title="Insights" artwork="insights" />
-      <div aria-hidden="true" className="space-y-6">
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {[0, 1, 2, 3].map((key) => (
-            <div key={key} className="panel space-y-4">
-              <Skeleton className="h-4 w-24 max-w-full" />
-              <Skeleton className="h-8 w-16" />
+      <div aria-hidden="true" className="space-y-4">
+        <div className="panel">
+          <Skeleton className="h-5 w-28" />
+          <div className="mt-4 grid gap-6 lg:grid-cols-[15rem_minmax(0,1fr)]">
+            <Skeleton className="h-44 lg:h-full lg:max-h-72" />
+            <div className="grid gap-3">
+              {[0, 1, 2, 3].map((key) => (
+                <Skeleton key={key} className="h-14" />
+              ))}
             </div>
-          ))}
+          </div>
         </div>
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Skeleton className="h-72" />
-          <Skeleton className="h-72" />
+        <div className="grid gap-4 lg:grid-cols-2">
+          {[0, 1, 2, 3].map((key) => (
+            <Skeleton key={key} className="h-[23rem] rounded-xl" />
+          ))}
         </div>
       </div>
       <span className="sr-only">Loading insights…</span>

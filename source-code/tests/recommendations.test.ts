@@ -49,6 +49,35 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 describe('recommender boundary (mocked external provider)', () => {
+  test('reports generation stages and forwards cancellation to the provider', async () => {
+    const stages: string[] = [];
+    const controller = new AbortController();
+    mocks.generate.mockImplementationOnce(async (options) => {
+      expect(options.abortSignal).toBeInstanceOf(AbortSignal);
+      controller.abort();
+      await Promise.resolve();
+      throw new DOMException('The operation was aborted.', 'AbortError');
+    });
+    await expect(
+      recommend(kitchen, request, {
+        signal: controller.signal,
+        onStage: (stage) => stages.push(stage),
+      }),
+    ).rejects.toMatchObject({ name: 'AbortError' });
+    expect(stages).toEqual(['preparing', 'generating']);
+    expect(mocks.generate).toHaveBeenCalledTimes(1);
+  });
+
+  test('cancellation before work prevents quota reservation and provider calls', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    await expect(recommend(kitchen, request, { signal: controller.signal })).rejects.toMatchObject({
+      name: 'AbortError',
+    });
+    expect(mocks.rpc).not.toHaveBeenCalled();
+    expect(mocks.generate).not.toHaveBeenCalled();
+  });
+
   test('empty or excluded inventory makes no paid request', async () => {
     expect((await recommend({ ...kitchen, items: [] }, request)).meals).toEqual([]);
     expect(mocks.generate).not.toHaveBeenCalled();
@@ -82,7 +111,7 @@ describe('recommender boundary (mocked external provider)', () => {
     });
     expect(mocks.generate.mock.calls[0][0]).not.toHaveProperty('tools');
     expect(mocks.rpc.mock.calls.map((call) => call[0])).toEqual(['reserve_ai', 'record_ai_usage']);
-    expect(kitchen.items[0].stock).toBe(3);
+    expect(kitchen.items[0].quantity).toBe(500);
   });
   test('requests three feasible options while allowing genuinely limited inventory', async () => {
     await recommend(kitchen, request);
@@ -177,7 +206,7 @@ describe('recommender boundary (mocked external provider)', () => {
       inputs: 400,
       outputs: 600,
     });
-    expect(kitchen.items[0].stock).toBe(3);
+    expect(kitchen.items[0].quantity).toBe(500);
   });
   test('a failed repair keeps the valid first-pass meal', async () => {
     mocks.generate
@@ -225,6 +254,6 @@ describe('recommender boundary (mocked external provider)', () => {
     await expect(recommend(kitchen, request)).rejects.toMatchObject({ status: 502 });
     expect(mocks.generate).toHaveBeenCalledTimes(1);
     expect(mocks.rpc.mock.calls.map((call) => call[0])).toEqual(['reserve_ai']);
-    expect(kitchen.items[0].stock).toBe(3);
+    expect(kitchen.items[0].quantity).toBe(500);
   });
 });

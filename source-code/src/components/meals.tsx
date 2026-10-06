@@ -1,11 +1,4 @@
 'use client';
-import { PageHeader } from './page-header';
-import { MealGenerationLoading } from './meal-generation-loading';
-import { PageActions } from './page-actions';
-import { MealPreferences } from './meal-preferences';
-import { SelectField } from './ui/select-field';
-import { Choice } from './ui/choice';
-import { Disclosure } from './ui/disclosure';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   ArrowLeft,
@@ -18,14 +11,64 @@ import {
   SlidersHorizontal,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { AppState, MealRequest, RankedMeal, Change, Item } from '@/domain/model';
-import { stockLabels } from '@/domain/model';
-import { eligibleItems, validateChanges, todaySingapore, matchesExclusion } from '@/domain/meals';
+import type { AppState, MealRequest, RankedMeal } from '@/domain/model';
+import type { MealGenerationStage } from '@/domain/meal-generation';
+import { formatQuantity } from '@/domain/quantities';
+import { daysUntil, eligibleItems, todaySingapore, matchesExclusion } from '@/domain/meals';
 import { commonStaples, requestStaples } from '@/domain/staples';
-import { api, ApiError, message } from '@/lib/api';
-import { Button } from './ui/button';
-import { Busy, ErrorText, Modal, Empty } from './common';
+import { generateMeals } from '@/lib/meal-generation';
+import { message } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { PageHeader } from './page-header';
+import { MealGenerationLoading } from './meal-generation-loading';
+import { MealImage, useMealImages } from './meal-image';
+import { MealConfirmation } from './meal-confirmation';
+import { PageActions } from './page-actions';
+import { MealPreferences } from './meal-preferences';
+import { Choice } from './ui/choice';
+import { InfoHelp } from './ui/info-help';
+import { Button } from './ui/button';
+import { ErrorText, Modal, Empty } from './common';
+
+function usedSoon(meal: RankedMeal) {
+  return meal.trackedItems
+    .filter((item) => daysUntil(item.expiry_date) <= 3)
+    .sort((a, b) => a.expiry_date.localeCompare(b.expiry_date));
+}
+function MealContext({ meal }: { meal: RankedMeal }) {
+  const soon = usedSoon(meal);
+  return (
+    <div className="space-y-1" data-meal-context>
+      <div className="flex min-h-11 items-center justify-between gap-2">
+        <p className="text-xs font-medium text-muted-foreground">
+          Expiry coverage{' '}
+          <span className="ml-1 text-base font-bold text-accent-foreground tabular-nums">
+            {Math.round(meal.score)}%
+          </span>
+        </p>
+        <InfoHelp label={`Why ${meal.name}?`}>
+          <p>
+            Covers {meal.coverage} eligible inventory ingredient{meal.coverage === 1 ? '' : 's'}.
+            The score weights ingredients by how soon they expire, regardless of amount used.
+          </p>
+          <p>Ties favour more ingredients, then shorter cooking time.</p>
+          <p>
+            Amounts and exclusions passed automated checks. Check food safety and actual amounts.
+            Recipes and images are AI generated.
+          </p>
+        </InfoHelp>
+      </div>
+      <p className="min-w-0 text-xs leading-relaxed text-muted-foreground">
+        {soon.length
+          ? `Uses soon: ${soon
+              .slice(0, 2)
+              .map((item) => item.name)
+              .join(', ')}${soon.length > 2 ? ` +${soon.length - 2}` : ''}`
+          : `Uses ${meal.coverage} inventory ingredient${meal.coverage === 1 ? '' : 's'}`}
+      </p>
+    </div>
+  );
+}
 
 export function Meals({
   state,
@@ -35,6 +78,7 @@ export function Meals({
   preferencesOpen,
   onPreferencesOpenChange,
   onShowResults,
+  preferredIngredientId,
 }: {
   state: AppState;
   refresh: () => Promise<AppState>;
@@ -43,6 +87,7 @@ export function Meals({
   preferencesOpen: boolean;
   onPreferencesOpenChange: (open: boolean) => void;
   onShowResults: () => void;
+  preferredIngredientId?: string | null;
 }) {
   const [request, setRequest] = useState<MealRequest>({
     servings: 2,
@@ -53,10 +98,17 @@ export function Meals({
   });
   const [stapleText, setStapleText] = useState('');
   const [meals, setMeals] = useState<RankedMeal[]>([]);
+  const [imageMeals, setImageMeals] = useState<RankedMeal[]>([]);
+  const { images, retry: retryImage } = useMealImages(imageMeals);
   const [detail, setDetail] = useState<RankedMeal | null>(null);
   const [selected, setSelected] = useState<RankedMeal | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [stage, setStage] = useState<MealGenerationStage>('preparing');
+  const [brief, setBrief] = useState<{
+    servings: number;
+    mealType: string;
+  }>({ servings: 2, mealType: 'Dinner' });
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [generated, setGenerated] = useState(false);
@@ -64,44 +116,74 @@ export function Meals({
   const heading = useRef<HTMLHeadingElement>(null);
   const focusRequested = useRef(false);
   const submitted = useRef(false);
-  const inFlight = useRef(false);
+  const inFlight = useRef<AbortController | null>(null);
   const available = eligibleItems(state.items, state.exclusions, [], todaySingapore());
   const eligible = available.filter((item) => !request.excludedIds.includes(item.id));
-
+  const [lastPreferredId, setLastPreferredId] = useState(preferredIngredientId);
+  if (lastPreferredId !== preferredIngredientId) {
+    setLastPreferredId(preferredIngredientId);
+    const preferred = available.find((item) => item.id === preferredIngredientId);
+    if (preferred)
+      setRequest((current) => ({ ...current, preferences: `Use ${preferred.name} if possible` }));
+  }
+  useEffect(
+    () => () => {
+      inFlight.current?.abort();
+    },
+    [],
+  );
   useEffect(() => {
     if (active && !preferencesOpen && focusRequested.current) {
       heading.current?.focus({ preventScroll: true });
       window.scrollTo({ top: 0, behavior: 'instant' });
       focusRequested.current = false;
     }
-  }, [active, preferencesOpen, selected, detail]);
+  }, [active, preferencesOpen, selected, detail, busy]);
 
   async function generate(event?: FormEvent<HTMLFormElement>) {
     event?.preventDefault();
     if (inFlight.current || selected || !eligible.length || !state.aiEnabled) return;
-    inFlight.current = true;
+    const abort = new AbortController();
+    inFlight.current = abort;
     submitted.current = true;
     focusRequested.current = true;
     setBusy(true);
+    setStage('preparing');
+    setBrief({ servings: request.servings, mealType: request.mealType });
     setDetail(null);
     setError('');
     setNotice('');
     onPreferencesOpenChange(false);
     onShowResults();
     try {
-      const result = await api<{ meals: RankedMeal[]; message: string }>('meals', {
-        ...request,
-        staples: requestStaples(request.staples, stapleText, state.exclusions),
-      });
+      const result = await generateMeals(
+        {
+          ...request,
+          staples: requestStaples(request.staples, stapleText, state.exclusions),
+        },
+        (value) => {
+          if (!abort.signal.aborted) setStage(value);
+        },
+        abort.signal,
+      );
+      if (abort.signal.aborted) return;
       setMeals(result.meals);
+      setImageMeals(result.meals);
       setNotice(result.message);
       setGenerated(true);
-    } catch (error) {
-      setError(message(error));
+      focusRequested.current = true;
+    } catch (cause) {
+      if (!abort.signal.aborted) setError(message(cause));
     } finally {
-      inFlight.current = false;
-      setBusy(false);
+      if (inFlight.current === abort) {
+        inFlight.current = null;
+        setBusy(false);
+      }
     }
+  }
+  function cancelGeneration() {
+    inFlight.current?.abort();
+    setNotice('Generation cancelled. Your inventory is unchanged.');
   }
   function pick(meal: RankedMeal) {
     focusRequested.current = true;
@@ -118,75 +200,82 @@ export function Meals({
   }
   const recipe = selected ?? detail;
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <PageHeader
         artwork="cook"
         headingRef={heading}
         title={selected ? 'Cooking' : detail ? 'Recipe' : 'Meal suggestions'}
         action={
-          !recipe && (meals.length > 0 || generated || error) ? (
-            <Button
-              variant="secondary"
-              disabled={busy}
-              onClick={() => onPreferencesOpenChange(true)}
-            >
+          !recipe && !busy && (meals.length > 0 || generated || error) ? (
+            <Button variant="secondary" onClick={() => onPreferencesOpenChange(true)}>
               <SlidersHorizontal size={17} /> Change preferences
             </Button>
           ) : undefined
         }
       />
       {recipe ? (
-        <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
-          <section className="panel page-section min-w-0 space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              {!selected ? (
-                <Button variant="ghost" onClick={() => showRecipe(null)}>
-                  <ArrowLeft size={17} /> Back to suggestions
-                </Button>
-              ) : (
-                <p className="eyebrow flex items-center gap-2">
-                  <ChefHat size={16} /> Selected meal
-                </p>
-              )}
-              {selected && (
-                <Button variant="ghost" onClick={() => setDiscard(true)}>
-                  <X size={17} /> End session
-                </Button>
-              )}
-            </div>
-            <h2 className="text-xl leading-snug font-bold sm:text-2xl">{recipe.name}</h2>
-            <RecipeDetails key={recipe.token} meal={recipe} />
-            <PageActions>
-              <Button size="lg" onClick={() => (selected ? setConfirming(true) : pick(recipe))}>
-                {selected ? 'I’ve finished cooking' : 'Cook this'}
-                {selected ? <Check size={18} /> : <ChefHat size={18} />}
+        <section className="panel page-section min-w-0 space-y-6">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            {!selected ? (
+              <Button variant="ghost" onClick={() => showRecipe(null)}>
+                <ArrowLeft size={17} /> Back to suggestions
               </Button>
-            </PageActions>
-            <p className="helper">
-              {selected
-                ? 'Next: review ingredients used, discarded and remaining stock.'
-                : 'Stock updates only after you cook and confirm.'}
-            </p>
-          </section>
-          <aside className="panel page-section lg:bg-secondary/30">
-            <h2 className="text-sm font-bold">Urgency coverage</h2>
-            <p className="mt-3 text-4xl font-extrabold">
-              {Math.round(recipe.score)}
-              <span className="text-xl"> / 100</span>
-            </p>
-            <p className="mt-2 text-sm leading-relaxed">
-              Uses {recipe.coverage} tracked ingredient{recipe.coverage === 1 ? '' : 's'}.
-            </p>
-            <Disclosure className="mt-3" title="How the score works">
-              <p className="helper">
-                Recorded expiry dates contribute 3 points within 3 days, 2 within 7 days, or 1
-                later. Score = recipe points ÷ all eligible points × 100. Staples do not contribute.
+            ) : (
+              <p className="eyebrow flex items-center gap-2">
+                <ChefHat size={16} /> Cooking session
               </p>
-            </Disclosure>
-          </aside>
-        </div>
+            )}
+            {selected && (
+              <Button variant="ghost" onClick={() => setDiscard(true)}>
+                <X size={17} /> End session
+              </Button>
+            )}
+          </div>
+          <div className="grid items-center gap-5 sm:grid-cols-[minmax(0,1fr)_240px]">
+            <div className="min-w-0 space-y-3">
+              <h2 className="text-xl leading-snug font-bold sm:text-2xl">{recipe.name}</h2>
+              <p className="text-sm leading-relaxed text-muted-foreground">{recipe.summary}</p>
+              <RecipeMeta meal={recipe} />
+              <MealContext meal={recipe} />
+            </div>
+            <MealImage
+              meal={recipe}
+              value={images[recipe.token]}
+              onRetry={() => retryImage(recipe.token)}
+              className={cn(
+                'mx-auto w-full max-w-sm sm:max-w-none',
+                selected && 'max-sm:aspect-auto max-sm:h-40 max-sm:max-w-none',
+              )}
+            />
+          </div>
+          <RecipeDetails
+            key={`${selected ? 'cooking' : 'preview'}-${recipe.token}`}
+            meal={recipe}
+            cooking={Boolean(selected)}
+          />
+          <PageActions>
+            <Button
+              size="lg"
+              className="max-sm:w-full"
+              onClick={() => (selected ? setConfirming(true) : pick(recipe))}
+            >
+              {selected ? 'I’ve finished cooking' : 'Cook this'}
+              {selected ? <Check size={18} /> : <ChefHat size={18} />}
+            </Button>
+          </PageActions>
+          <p className="helper">
+            {selected
+              ? 'Adjust actual amounts, then confirm.'
+              : 'Stock updates after you cook and confirm.'}
+          </p>
+        </section>
       ) : busy ? (
-        <MealGenerationLoading />
+        <MealGenerationLoading
+          stage={stage}
+          servings={brief.servings}
+          mealType={brief.mealType}
+          onCancel={cancelGeneration}
+        />
       ) : (
         <div className="space-y-5">
           {error && (
@@ -201,56 +290,52 @@ export function Meals({
               </Button>
             </div>
           )}
+          {notice && (meals.length > 0 || error) && (
+            <p role="status" className="helper">
+              {notice}
+            </p>
+          )}
           {meals.length ? (
             <>
-              {notice && (
-                <p role="status" className="helper">
-                  {notice}
-                </p>
-              )}
-              <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+              <div className="grid items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {meals.map((meal, index) => (
-                  <article key={meal.token} className="panel flex min-w-0 flex-col">
-                    <div className="mb-4 flex items-center justify-between gap-3">
-                      <span className="rounded-full bg-secondary px-3 py-1.5 text-xs font-bold">
-                        {index === 0 ? 'Best urgency match' : 'Alternative'}
-                      </span>
-                      <span
-                        className="shrink-0 text-xl font-bold"
-                        aria-label={`Urgency coverage ${Math.round(meal.score)} out of 100`}
-                      >
-                        {Math.round(meal.score)}
-                        <span className="text-xs font-normal text-muted-foreground"> / 100</span>
-                      </span>
+                  <article
+                    key={meal.token}
+                    className="panel row-span-6 grid min-w-0 grid-rows-subgrid gap-y-3 !p-3 sm:!p-4"
+                  >
+                    <div className="relative self-start">
+                      <MealImage
+                        meal={meal}
+                        value={images[meal.token]}
+                        onRetry={() => retryImage(meal.token)}
+                      />
+                      {index === 0 && usedSoon(meal).length > 0 && (
+                        <span className="absolute top-3 left-3 rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow-sm">
+                          Use first
+                        </span>
+                      )}
                     </div>
-                    <h2 className="text-lg leading-snug font-bold">{meal.name}</h2>
-                    <p className="mt-2 text-sm text-muted-foreground">{meal.summary}</p>
-                    <div className="my-5 flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1.5">
-                        <Clock3 size={14} />
-                        {meal.cookingMinutes} min estimate
-                      </span>
-                      <span className="flex items-center gap-1.5">
-                        <Users size={14} />
-                        {meal.servings} servings
-                      </span>
-                      <span>{meal.coverage} tracked ingredients</span>
+                    <h2 className="px-1 text-lg leading-snug font-bold">{meal.name}</h2>
+                    <p className="px-1 text-sm leading-relaxed text-muted-foreground">
+                      {meal.summary}
+                    </p>
+                    <div className="px-1" data-meal-meta>
+                      <RecipeMeta meal={meal} />
                     </div>
-                    <div className="mt-auto flex flex-wrap gap-2 pt-1">
-                      <Button onClick={() => pick(meal)}>Cook this</Button>
-                      <Button variant="ghost" onClick={() => showRecipe(meal)}>
+                    <div className="px-1">
+                      <MealContext meal={meal} />
+                    </div>
+                    <div className="flex gap-2 px-1 pt-1 pb-1" data-meal-actions>
+                      <Button className="flex-1" onClick={() => pick(meal)}>
+                        <ChefHat size={16} /> Cook this
+                      </Button>
+                      <Button variant="outline" className="flex-1" onClick={() => showRecipe(meal)}>
                         See recipe
                       </Button>
                     </div>
                   </article>
                 ))}
               </div>
-              <Disclosure title="How meals are ranked">
-                <p className="helper">
-                  Ranked by urgency score, ingredient coverage, estimated time, then name. Selecting
-                  a meal does not deduct stock.
-                </p>
-              </Disclosure>
             </>
           ) : (
             !error && (
@@ -265,8 +350,8 @@ export function Meals({
                 description={
                   notice ||
                   (available.length
-                    ? 'Choose from up to three meals using your ingredients.'
-                    : 'Add stocked ingredients with current expiry dates to get started.')
+                    ? 'Meal ideas using your ingredients, with expiry dates in mind.'
+                    : 'Add ingredients or set their measured amounts to get started.')
                 }
                 action={
                   available.length
@@ -299,7 +384,7 @@ export function Meals({
         onSubmit={generate}
       />
       {confirming && selected && (
-        <Confirmation
+        <MealConfirmation
           meal={selected}
           state={state}
           refresh={refresh}
@@ -307,6 +392,7 @@ export function Meals({
           complete={() => {
             setConfirming(false);
             setSelected(null);
+            setImageMeals([]);
             toast.success('Meal recorded and inventory updated.');
             onKitchen();
           }}
@@ -315,7 +401,7 @@ export function Meals({
       {discard && (
         <Modal
           title="End this cooking session?"
-          description="Your selection will be discarded. No meal or inventory changes will be recorded."
+          description="Your selection will be cleared. Inventory and meal history stay unchanged."
           onClose={() => setDiscard(false)}
           footer={
             <>
@@ -327,6 +413,7 @@ export function Meals({
                 onClick={() => {
                   focusRequested.current = true;
                   setSelected(null);
+                  setImageMeals([]);
                   setDiscard(false);
                 }}
               >
@@ -339,260 +426,95 @@ export function Meals({
     </div>
   );
 }
-function RecipeDetails({ meal }: { meal: RankedMeal }) {
-  const [done, setDone] = useState<number[]>([]);
+function RecipeMeta({ meal }: { meal: RankedMeal }) {
   return (
-    <div className="space-y-6">
-      <p className="text-sm leading-relaxed text-muted-foreground">{meal.summary}</p>
-      <div className="flex flex-wrap gap-4 text-sm">
-        <span className="flex items-center gap-2">
-          <Clock3 size={16} />
-          {meal.cookingMinutes} min estimate
-        </span>
-        <span className="flex items-center gap-2">
-          <Users size={16} />
-          {meal.servings} servings
-        </span>
-      </div>
-      <div>
-        <h3 className="mb-3 font-bold">Ingredients</h3>
-        <ul>
-          {meal.ingredients.map((i) => (
-            <li key={i.ingredientId} className="flex justify-between gap-4 py-2.5 text-sm">
-              <span>
-                {meal.ingredientNames[i.ingredientId] ?? 'Ingredient'}
-                {i.ingredientId.startsWith('staple-') && (
-                  <span className="ml-2 text-xs text-muted-foreground">staple</span>
-                )}
-              </span>
-              <span className="text-right text-muted-foreground">{i.estimatedAmount}</span>
-            </li>
-          ))}
-        </ul>
-        <p className="helper mt-2">
-          Amounts are estimates. Stock bands do not establish exact quantities.
-        </p>
-      </div>
-      <div>
-        <h3 className="mb-3 font-bold">Steps</h3>
-        <ol className="space-y-3">
-          {meal.steps.map((step, i) => (
-            <li key={i}>
-              <Choice
-                variant="step"
-                number={i + 1}
-                label={`Step ${i + 1}: ${step}`}
-                checked={done.includes(i)}
-                onCheckedChange={(checked) =>
-                  setDone(checked ? [...done, i] : done.filter((n) => n !== i))
-                }
-              >
-                <span className={cn(done.includes(i) && 'text-muted-foreground line-through')}>
-                  {step}
-                </span>
-              </Choice>
-            </li>
-          ))}
-        </ol>
-      </div>
+    <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted-foreground">
+      <span className="flex items-center gap-1.5">
+        <Clock3 size={14} />
+        {meal.cookingMinutes} min estimate
+      </span>
+      <span className="flex items-center gap-1.5">
+        <Users size={14} />
+        {meal.servings} servings
+      </span>
     </div>
   );
 }
-function Confirmation({
-  meal,
-  state,
-  refresh,
-  close,
-  complete,
-}: {
-  meal: RankedMeal;
-  state: AppState;
-  refresh: () => Promise<AppState>;
-  close: () => void;
-  complete: () => void;
-}) {
-  const initial = meal.trackedItems.map((i) => state.items.find((v) => v.id === i.id) ?? i);
-  const [items, setItems] = useState<Item[]>(initial);
-  const [changes, setChanges] = useState<Change[]>(() =>
-    initial.map((i) => ({
-      id: i.id,
-      version: i.version,
-      stock: i.stock,
-      used: false,
-      discarded: false,
-    })),
-  );
-  const [review, setReview] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  const [conflict, setConflict] = useState(false);
-  function update(id: string, patch: Partial<Change>) {
-    setChanges((list) =>
-      list.map((c) => {
-        if (c.id !== id) return c;
-        const next = { ...c, ...patch };
-        if (!next.used && !next.discarded) next.stock = items.find((i) => i.id === id)!.stock;
-        return next;
-      }),
-    );
-  }
-  function preview() {
-    try {
-      validateChanges(changes, items);
-      setError('');
-      setReview(true);
-    } catch (e) {
-      setError(message(e));
-    }
-  }
-  async function reload() {
-    setBusy(true);
-    try {
-      const latest = await refresh();
-      const current = meal.trackedItems.map((i) => latest.items.find((v) => v.id === i.id));
-      if (current.some((i) => !i))
-        throw new Error(
-          'A recipe ingredient was removed. End this session and request fresh suggestions.',
-        );
-      const available = current.filter((i): i is Item => !!i);
-      setItems(available);
-      setChanges(
-        available.map((i) => ({
-          id: i.id,
-          version: i.version,
-          stock: i.stock,
-          used: false,
-          discarded: false,
-        })),
-      );
-      setConflict(false);
-      setError('');
-      setReview(false);
-      toast.info('Latest stock loaded. Please review your outcome again.');
-    } catch (e) {
-      setError(message(e));
-    } finally {
-      setBusy(false);
-    }
-  }
-  async function save() {
-    setBusy(true);
-    setError('');
-    try {
-      await api('confirm', { token: meal.token, changes });
-      await refresh();
-      complete();
-    } catch (e) {
-      setError(message(e));
-      if (e instanceof ApiError && e.status === 409) setConflict(true);
-    } finally {
-      setBusy(false);
-    }
-  }
+function RecipeDetails({ meal, cooking }: { meal: RankedMeal; cooking: boolean }) {
+  const [done, setDone] = useState<number[]>([]);
   return (
-    <Modal
-      title={review ? 'Review meal & stock' : 'Record meal'}
-      description={
-        review
-          ? 'Only these confirmed changes will update the household.'
-          : 'Review each tracked ingredient. Stock starts unchanged; choose what remains.'
-      }
-      onClose={() => !busy && close()}
-      wide
-      footer={
-        <>
-          <Button variant="ghost" disabled={busy} onClick={review ? () => setReview(false) : close}>
-            {review ? (
-              <>
-                <ArrowLeft size={16} />
-                Back
-              </>
-            ) : (
-              'Cancel'
-            )}
-          </Button>
-          {conflict ? (
-            <Button variant="outline" disabled={busy} onClick={reload}>
-              <RefreshCw size={16} />
-              Load latest stock
-            </Button>
-          ) : (
-            <Button disabled={busy} onClick={review ? save : preview}>
-              <Busy busy={busy}>{review ? 'Confirm meal & stock' : 'Preview changes'}</Busy>
-              {!busy && <Check size={16} />}
-            </Button>
-          )}
-        </>
-      }
-    >
-      <ErrorText error={error} />
-      {!conflict && (
-        <div className="space-y-4">
-          {changes.map((c) => {
-            const item = items.find((i) => i.id === c.id)!;
-            return (
-              <div
-                key={c.id}
-                className="border-b border-border pb-4 last:border-b-0 sm:rounded-xl sm:border-0 sm:bg-muted sm:p-4"
-              >
-                <div className="flex justify-between gap-3">
-                  <h3 className="font-bold">{item.name}</h3>
-                  <span className="text-xs text-muted-foreground">
-                    Was {stockLabels[item.stock]}
-                  </span>
-                </div>
-                {review ? (
-                  <div className="mt-2 text-sm">
-                    <p>
-                      {c.used ? 'Used' : 'Not used'} · {c.discarded ? 'Discarded' : 'Not discarded'}
-                    </p>
-                    <p className={cn('mt-2 font-semibold', c.stock === 0 && 'text-destructive')}>
-                      Remaining: {stockLabels[c.stock]}
-                      {c.stock === 0 ? ' · marked depleted' : ''}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
-                    <div
-                      className="flex flex-wrap gap-2"
-                      role="group"
-                      aria-label={`Usage for ${item.name}`}
-                    >
-                      {(['used', 'discarded'] as const).map((flag) => (
-                        <Choice
-                          key={flag}
-                          variant="pill"
-                          className="capitalize"
-                          checked={c[flag]}
-                          onCheckedChange={(checked) => update(c.id, { [flag]: checked })}
-                        >
-                          {flag}
-                        </Choice>
-                      ))}
-                    </div>
-                    <label className="field min-w-36">
-                      Remaining stock
-                      <SelectField
-                        label={`Remaining stock for ${item.name}`}
-                        value={String(c.stock)}
-                        disabled={!c.used && !c.discarded}
-                        onValueChange={(value) => update(c.id, { stock: Number(value) })}
-                        options={stockLabels
-                          .map((label, n) => ({ value: String(n), label }))
-                          .filter((_, n) => n <= item.stock)}
-                      />
-                    </label>
-                  </div>
+    <div className="grid items-start gap-6 border-t border-border pt-6 lg:grid-cols-[minmax(200px,0.7fr)_minmax(0,1.3fr)]">
+      <div className="min-w-0">
+        <h3 className="mb-3 font-bold">Ingredients</h3>
+        <ul>
+          {meal.ingredients.map((ingredient) => (
+            <li
+              key={ingredient.ingredientId}
+              className="flex justify-between gap-4 border-b border-border/50 py-2.5 text-sm last:border-0"
+            >
+              <span className="min-w-0">
+                {meal.ingredientNames[ingredient.ingredientId] ?? 'Ingredient'}
+                {ingredient.ingredientId.startsWith('staple-') && (
+                  <span className="ml-2 text-xs text-muted-foreground">staple</span>
                 )}
-              </div>
-            );
-          })}
+              </span>
+              <span className="shrink-0 text-right text-muted-foreground tabular-nums">
+                {formatQuantity(ingredient.amount, ingredient.unit)}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p className="helper mt-3">
+          Recipe amounts are estimates. Adjust actual use after cooking.
+        </p>
+      </div>
+      <section aria-label="Recipe steps" className="min-w-0">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h3 className="font-bold">Steps</h3>
+          {cooking && (
+            <span className="text-xs tabular-nums text-muted-foreground" aria-live="polite">
+              {done.length} of {meal.steps.length} complete
+            </span>
+          )}
         </div>
-      )}
-      <p className="helper">
-        Used and discarded are independent: both can apply. Selecting neither leaves stock
-        unchanged. Staples are not tracked.
-      </p>
-    </Modal>
+        <ol className="space-y-3">
+          {meal.steps.map((step, index) => (
+            <li key={index}>
+              {cooking ? (
+                <Choice
+                  variant="step"
+                  number={index + 1}
+                  label={`Step ${index + 1}: ${step}`}
+                  checked={done.includes(index)}
+                  onCheckedChange={(checked) =>
+                    setDone((current) =>
+                      checked
+                        ? [...current.filter((value) => value !== index), index]
+                        : current.filter((value) => value !== index),
+                    )
+                  }
+                >
+                  <span
+                    className={cn(done.includes(index) && 'text-muted-foreground line-through')}
+                  >
+                    {step}
+                  </span>
+                </Choice>
+              ) : (
+                <div className="flex items-start gap-3 rounded-lg border border-border p-4 text-sm leading-relaxed">
+                  <span
+                    aria-hidden="true"
+                    className="grid size-6 shrink-0 place-items-center rounded-full bg-secondary text-xs font-bold"
+                  >
+                    {index + 1}
+                  </span>
+                  <span className="min-w-0 flex-1">{step}</span>
+                </div>
+              )}
+            </li>
+          ))}
+        </ol>
+      </section>
+    </div>
   );
 }

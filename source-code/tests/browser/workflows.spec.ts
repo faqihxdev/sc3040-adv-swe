@@ -21,6 +21,8 @@ test('UC2 / FR-04–FR-05: required date, preview, add, edit, remove and safe un
   await expect(page.getByRole('heading', { name: 'Review ingredient' })).toHaveCount(0);
   expect((await state(page)).items).toHaveLength(0);
   await page.getByLabel('Expiry date', { exact: true }).fill('2020-01-01');
+  await page.getByLabel('Amount', { exact: true }).fill('500');
+  await selectOption(page, 'Amount unit', 'g');
   await page.getByRole('button', { name: 'Review details' }).click();
   expect((await state(page)).items).toHaveLength(0);
   await page.getByRole('button', { name: 'Confirm ingredient' }).click();
@@ -34,8 +36,12 @@ test('UC2 / FR-04–FR-05: required date, preview, add, edit, remove and safe un
   await page.getByLabel('Ingredient name', { exact: true }).fill('Brown rice');
   await page.getByRole('button', { name: 'Review details' }).click();
   await page.getByRole('button', { name: 'Confirm changes' }).click();
-  await expect(page.getByRole('button', { name: 'Remove Brown rice', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Remove Brown rice', exact: true }).click();
+  await expect(page.getByRole('button', { name: /More actions/ }).first()).toBeVisible();
+  await page
+    .getByRole('button', { name: /More actions/ })
+    .first()
+    .click();
+  await page.getByRole('menuitem', { name: 'Remove ingredient', exact: true }).click();
   await page.getByRole('button', { name: 'Remove ingredient', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Edit Brown rice' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Activity & undo' }).click();
@@ -45,7 +51,7 @@ test('UC2 / FR-04–FR-05: required date, preview, add, edit, remove and safe un
     .toEqual(['Brown rice']);
 });
 
-test('UC2 photo / FR-04: recognition is a draft; stock/date and final confirmation are required @smoke', async ({
+test('UC2 photo / FR-04: recognition is a draft; amount/date and final confirmation are required @smoke', async ({
   page,
   kitchen,
 }) => {
@@ -73,7 +79,8 @@ test('UC2 photo / FR-04: recognition is a draft; stock/date and final confirmati
   expect((await state(page)).items).toHaveLength(0);
   await page.getByRole('button', { name: 'Review 1 ingredient', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Check the highlighted fields');
-  await selectOption(page, 'Stock level for ingredient 1', 'Medium');
+  await page.getByLabel('Amount', { exact: true }).fill('500');
+  await selectOption(page, 'Amount unit', 'g');
   await page.getByLabel(/^Expiry date/).fill('2099-12-31');
   await page.getByRole('tab', { name: 'Manual', exact: true }).click();
   await page.getByRole('tab', { name: 'Photo', exact: true }).click();
@@ -82,7 +89,11 @@ test('UC2 photo / FR-04: recognition is a draft; stock/date and final confirmati
   expect((await state(page)).items).toHaveLength(0);
   await page.getByRole('button', { name: 'Confirm 1 ingredient', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Edit Tomato', exact: true })).toBeVisible();
-  expect((await state(page)).items[0]).toMatchObject({ stock: 3, expiry_date: '2099-12-31' });
+  expect((await state(page)).items[0]).toMatchObject({
+    quantity: 500,
+    unit: 'g',
+    expiry_date: '2099-12-31',
+  });
 });
 
 test('UC1/UC3/UC4: recommend, cook, confirm, retry and inspect recorded analytics @smoke', async ({
@@ -103,20 +114,43 @@ test('UC1/UC3/UC4: recommend, cook, confirm, retry and inspect recorded analytic
   const submitted = page.waitForRequest('**/api/meals');
   await page.getByRole('button', { name: 'Next', exact: true }).click();
   expect((await submitted).postDataJSON().staples).toEqual(['Water', 'Cooking oil']);
+  await page.getByRole('button', { name: 'See recipe', exact: true }).click();
+  const steps = page.getByRole('region', { name: 'Recipe steps', exact: true }).getByRole('list');
+  await expect(steps.getByRole('listitem')).toHaveCount(4);
+  await expect(steps.getByRole('checkbox')).toHaveCount(0);
+  await steps.getByText('Rinse the rice.', { exact: true }).click();
+  await expect(steps.getByText('Rinse the rice.', { exact: true })).not.toHaveClass(/line-through/);
+  await page.screenshot({
+    path: testInfo.outputPath('recipe-preview.png'),
+    fullPage: true,
+    animations: 'disabled',
+  });
   await page.getByRole('button', { name: 'Cook this', exact: true }).click();
-  expect((await state(page)).items[0].stock).toBe(3);
+  await expect(steps.getByRole('checkbox')).toHaveCount(4);
+  const firstStep = steps.getByRole('checkbox', { name: 'Step 1: Rinse the rice.', exact: true });
+  await expect(firstStep).not.toBeChecked();
+  expect((await state(page)).items[0].quantity).toBe(500);
   expect((await state(page)).outcomes).toHaveLength(0);
   await page.getByText('Rinse the rice.', { exact: true }).click();
+  await expect(firstStep).toBeChecked();
+  await firstStep.focus();
+  await page.keyboard.press('Space');
+  await expect(firstStep).not.toBeChecked();
+  await page.keyboard.press('Space');
+  await expect(firstStep).toBeChecked();
+  await page.screenshot({
+    path: testInfo.outputPath('recipe-cooking.png'),
+    fullPage: true,
+    animations: 'disabled',
+  });
   await page.getByRole('button', { name: 'I’ve finished cooking' }).click();
-  await expect(page.getByLabel('Remaining stock for Rice', { exact: true })).toBeDisabled();
-  const usage = page.getByRole('group', { name: 'Usage for Rice' });
-  await usage.getByText('used', { exact: true }).click();
-  await usage.getByText('discarded', { exact: true }).click();
-  await selectOption(page, 'Remaining stock for Rice', 'Very Low');
-  await page.getByRole('button', { name: 'Preview changes' }).click();
+  await page.getByLabel('Used amount for Rice', { exact: true }).fill('100');
+  await page.getByRole('button', { name: 'Waste details for Rice', exact: true }).click();
+  await page.getByLabel('Waste amount for Rice (optional)', { exact: true }).fill('50');
+  await selectOption(page, 'Waste reason for Rice', 'prep');
   expect((await state(page)).outcomes).toHaveLength(0);
   const confirmation = page.waitForRequest('**/api/confirm');
-  await page.getByRole('button', { name: 'Confirm meal & stock', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm meal', exact: true }).click();
   const body = (await confirmation).postDataJSON();
   await expect(page.getByRole('heading', { name: 'Inventory', exact: true })).toBeVisible();
   const retry = await page.request.post('/api/confirm', {
@@ -125,7 +159,7 @@ test('UC1/UC3/UC4: recommend, cook, confirm, retry and inspect recorded analytic
   });
   expect(retry.status()).toBe(200);
   const recorded = await state(page);
-  expect(recorded.items[0].stock).toBe(1);
+  expect(recorded.items[0].quantity).toBe(350);
   expect(recorded.outcomes).toHaveLength(1);
   expect(recorded.outcomes[0].ingredients[0]).toMatchObject({
     name: 'Rice',
@@ -133,31 +167,17 @@ test('UC1/UC3/UC4: recommend, cook, confirm, retry and inspect recorded analytic
     discarded: true,
   });
   await page.goto('/?view=analytics');
-  await expect(page.getByRole('heading', { name: 'Recent meals' })).toBeVisible();
-  await page.getByText('View chart data', { exact: true }).click();
-  await expect(page.getByRole('table', { name: 'Recorded ingredient events' })).toBeVisible();
-  const grouping = page.getByRole('checkbox', { name: 'Group by week', exact: true });
-  const control = grouping.locator('..');
-  const graphTitle = page.getByRole('heading', { name: 'Used and discarded', exact: true });
-  const titleBounds = await graphTitle.boundingBox();
-  const controlBounds = await control.boundingBox();
-  expect(titleBounds).not.toBeNull();
-  expect(controlBounds).not.toBeNull();
-  expect(controlBounds!.x).toBeGreaterThan(titleBounds!.x + titleBounds!.width);
-  expect(controlBounds!.y).toBeLessThan(titleBounds!.y + titleBounds!.height);
-  await page.getByText('Group by week', { exact: true }).click();
-  await expect(grouping).toBeChecked();
-  await expect(page.getByText('Weeks start Monday.', { exact: false })).toHaveCount(0);
-  // A seven-day period contains at most two weekly buckets, plus the header row.
-  expect(
-    await page.getByRole('table', { name: 'Recorded ingredient events' }).getByRole('row').count(),
-  ).toBeLessThanOrEqual(3);
-  await page.evaluate(() => window.scrollTo(0, 0));
-  await page.screenshot({
-    path: testInfo.outputPath('insights-weekly.png'),
-    fullPage: true,
-    animations: 'disabled',
-  });
+  await selectOption(page, 'Reporting period', 'Last 7 days');
+  const records = page.getByRole('dialog', { name: 'Amount records', exact: true });
+  await page.getByRole('button', { name: 'View amount records', exact: true }).click();
+  await expect(records).toBeVisible();
+  await selectOption(page, 'Record type', 'Waste');
+  await selectOption(page, 'Record unit', 'g');
+  await expect(records.getByRole('table', { name: 'Recorded amounts', exact: true })).toContainText(
+    '50 g',
+  );
+  await expect(records).toContainText('Prep scraps');
+  await records.getByRole('button', { name: 'Close', exact: true }).first().click();
 });
 
 test('UC1/UC3: provider failure preserves preferences; cancelling a selection saves nothing', async ({
@@ -197,7 +217,7 @@ test('UC1/UC3: provider failure preserves preferences; cancelling a selection sa
   await page.getByRole('button', { name: 'Cook this', exact: true }).click();
   await page.getByRole('button', { name: 'End session', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'End session', exact: true }).click();
-  expect((await state(page)).items[0].stock).toBe(3);
+  expect((await state(page)).items[0].quantity).toBe(500);
   expect((await state(page)).outcomes).toHaveLength(0);
 });
 
@@ -275,24 +295,34 @@ test('FR-13: account settings remain accessible after household deletion', async
   await expect(page).toHaveURL(/\/login/);
 });
 
-test('PR-04: stale stock returns conflict and leaves the database unchanged', async ({
+test('PR-04: stale quantity returns conflict and leaves the database unchanged', async ({
   page,
   kitchen,
 }) => {
   await signIn(page, kitchen.owner);
   const rice = await addRice(page);
   const meal = mealFixture(kitchen, rice);
-  expect((await action(page, { ...rice, command: 'edit_item', stock: 2 })).status()).toBe(200);
+  expect(
+    (await action(page, { ...rice, command: 'edit_item', quantity: 200, unit: 'g' })).status(),
+  ).toBe(200);
   const response = await page.request.post('/api/confirm', {
     headers: { Origin: 'http://127.0.0.1:3100' },
     data: {
       token: meal.token,
-      changes: [{ id: rice.id, version: rice.version, stock: 1, used: true, discarded: false }],
+      changes: [
+        {
+          id: rice.id,
+          version: rice.version,
+          usedAmount: 100,
+          discardedAmount: 0,
+          discardReason: null,
+        },
+      ],
     },
   });
   expect(response.status()).toBe(409);
   const unchanged = await state(page);
-  expect(unchanged.items[0].stock).toBe(2);
+  expect(unchanged.items[0].quantity).toBe(200);
   expect(unchanged.outcomes).toHaveLength(0);
 });
 
@@ -346,10 +376,10 @@ test('FR-10: incorrect password, local recovery request and logout', async ({ pa
 test('FR-09: empty insights states the reporting limit', async ({ page, kitchen }) => {
   await signIn(page, kitchen.owner);
   await page.goto('/?view=analytics');
-  await expect(page.getByRole('heading', { name: 'No meals recorded' })).toBeVisible();
-  await expect(
-    page.getByText('Unrecorded meals and waste are not included.', { exact: false }),
-  ).toBeVisible();
+  await expect(page.getByText('No waste recorded in this period.', { exact: true })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Why discarded', exact: true })).toContainText(
+    'No discards recorded',
+  );
 });
 
 test('API: authentication, origin, JSON validation and forged tickets fail closed @smoke', async ({
@@ -368,7 +398,8 @@ test('API: authentication, origin, JSON validation and forged tickets fail close
       await action(page, {
         command: 'add_item',
         name: 'Rice',
-        stock: 3,
+        quantity: 3,
+        unit: 'g',
         expiry_date: '',
         category: '',
         location: '',
@@ -384,9 +415,83 @@ test('API: authentication, origin, JSON validation and forged tickets fail close
     headers: { Origin: 'http://127.0.0.1:3100' },
     data: {
       token: 'forged.payload',
-      changes: [{ id: kitchen.householdId, version: 1, stock: 3, used: false, discarded: false }],
+      changes: [
+        {
+          id: kitchen.householdId,
+          version: 1,
+          usedAmount: 0,
+          discardedAmount: 0,
+          discardReason: null,
+        },
+      ],
     },
   });
   expect(forged.status()).toBe(400);
   expect((await state(page)).items).toHaveLength(0);
+});
+
+test('quantity regressions: decimals, restock, waste and overdraw are explicit', async ({
+  page,
+  kitchen,
+}) => {
+  await signIn(page, kitchen.owner);
+  const rice = await addRice(page);
+  const loaded = await state(page);
+  const current = loaded.items.find((item) => item.id === rice.id)!;
+  const decimal = await action(page, {
+    command: 'edit_item',
+    id: current.id,
+    version: current.version,
+    name: current.name,
+    quantity: 0.29,
+    unit: 'g',
+    expiry_date: current.expiry_date,
+    category: current.category,
+    location: current.location,
+  });
+  expect(decimal.status()).toBe(200);
+  const afterDecimal = (await state(page)).items.find((item) => item.id === rice.id)!;
+  expect(afterDecimal.quantity).toBe(0.29);
+  const restock = await action(page, {
+    command: 'adjust_item',
+    id: rice.id,
+    version: afterDecimal.version,
+    kind: 'restock',
+    amount: 10.01,
+    discardReason: null,
+  });
+  expect(restock.status()).toBe(200);
+  const afterRestock = (await state(page)).items.find((item) => item.id === rice.id)!;
+  const waste = await action(page, {
+    command: 'adjust_item',
+    id: rice.id,
+    version: afterRestock.version,
+    kind: 'discarded',
+    amount: 0.3,
+    discardReason: 'prep',
+  });
+  expect(waste.status()).toBe(200);
+  const afterWaste = (await state(page)).items.find((item) => item.id === rice.id)!;
+  expect(afterWaste.quantity).toBe(10);
+  const overdraw = await action(page, {
+    command: 'adjust_item',
+    id: rice.id,
+    version: afterWaste.version,
+    kind: 'discarded',
+    amount: 10.01,
+    discardReason: 'other',
+  });
+  expect(overdraw.status()).toBe(400);
+});
+
+test('quantity UI: known units stay locked while amount remains editable', async ({
+  page,
+  kitchen,
+}) => {
+  await signIn(page, kitchen.owner);
+  await addRice(page);
+  await page.reload();
+  await page.getByRole('button', { name: 'Edit Rice', exact: true }).click();
+  await expect(page.getByLabel('Amount unit', { exact: true })).toBeDisabled();
+  await expect(page.getByLabel('Amount', { exact: true })).toHaveValue('500');
 });

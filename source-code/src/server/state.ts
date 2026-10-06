@@ -1,6 +1,6 @@
 import 'server-only';
 import { serverDb } from '@/lib/supabase/server';
-import type { AppState, Outcome } from '@/domain/model';
+import type { AppState, Outcome, QuantityEvent } from '@/domain/model';
 import { AppError } from './errors';
 export { AppError } from './errors';
 export async function loadState(): Promise<AppState> {
@@ -31,6 +31,7 @@ export async function loadState(): Promise<AppState> {
       process.env.DEMO_MODE === 'true' &&
       household?.id === process.env.DEMO_HOUSEHOLD_ID &&
       household?.owner_id === user.id,
+    quantityEvents: [],
   };
   if (!household) return base;
   const outcomePage = (offset: number) =>
@@ -40,7 +41,16 @@ export async function loadState(): Promise<AppState> {
       .order('created_at', { ascending: false })
       .order('id', { ascending: false })
       .range(offset, offset + 499);
-  const [items, members, activity, firstOutcomes] = await Promise.all([
+  const eventPage = (offset: number) =>
+    db
+      .from('quantity_events')
+      .select(
+        'id,sequence,voided,item_id,name,category,unit,kind,amount,before_quantity,quantity,created_at,synthetic,discard_reason',
+      )
+      .order('created_at', { ascending: false })
+      .order('sequence', { ascending: false })
+      .range(offset, offset + 499);
+  const [items, members, activity, firstOutcomes, firstEvents] = await Promise.all([
     db.from('inventory').select('*').eq('deleted', false).order('expiry_date'),
     db.rpc('member_directory'),
     db
@@ -49,6 +59,7 @@ export async function loadState(): Promise<AppState> {
       .order('id', { ascending: false })
       .limit(100),
     outcomePage(0),
+    eventPage(0),
   ]);
   if (items.error || members.error || activity.error)
     throw new AppError('Could not refresh household data. Try again.', 503);
@@ -61,5 +72,20 @@ export async function loadState(): Promise<AppState> {
     outcomes.push(...(r.data as unknown as Outcome[]));
     if (r.data.length < 500) break;
   }
-  return { ...base, items: items.data, members: members.data, activity: activity.data, outcomes };
+  if (firstEvents.error) throw new AppError('Could not load quantity history.', 503);
+  const quantityEvents = firstEvents.data as unknown as QuantityEvent[];
+  for (let offset = 500; quantityEvents.length === offset; offset += 500) {
+    const r = await eventPage(offset);
+    if (r.error) throw new AppError('Could not load quantity history.', 503);
+    quantityEvents.push(...(r.data as unknown as QuantityEvent[]));
+    if (r.data.length < 500) break;
+  }
+  return {
+    ...base,
+    items: items.data as unknown as AppState['items'],
+    members: members.data,
+    activity: activity.data,
+    outcomes,
+    quantityEvents,
+  };
 }

@@ -1,4 +1,5 @@
 import { recipeSchema, type Item, type MealRequest, type Recipe } from './model';
+import { quantityAvailable, quantitySchema, discardReasonSchema } from './quantities';
 
 export const todaySingapore = (now = new Date()) =>
   new Intl.DateTimeFormat('en-CA', {
@@ -12,7 +13,8 @@ export function daysUntil(date: string, today = todaySingapore()) {
 }
 export function expiryPoints(item: Item, today: string) {
   const days = daysUntil(item.expiry_date, today);
-  return days < 0 || item.stock === 0 ? 0 : days <= 3 ? 3 : days <= 7 ? 2 : 1;
+  const empty = item.quantity === null || item.quantity === 0;
+  return days < 0 || empty ? 0 : days <= 3 ? 3 : days <= 7 ? 2 : 1;
 }
 export const normalize = (text: string) =>
   text
@@ -155,6 +157,15 @@ export function validateAndRank(
       )
         return [];
       const used = eligible.filter((i) => ids.includes(i.id));
+      if (
+        meal.ingredients.some((ingredient) => {
+          const item = used.find((candidate) => candidate.id === ingredient.ingredientId);
+          return item
+            ? !quantityAvailable(item.quantity, item.unit, ingredient.amount, ingredient.unit)
+            : false;
+        })
+      )
+        return [];
       if (!used.length) return [];
       if (
         mentionsUnlistedIngredient(
@@ -188,17 +199,30 @@ export function validateAndRank(
     .slice(0, 3);
 }
 export function validateChanges(
-  changes: { id: string; stock: number; used: boolean; discarded: boolean }[],
+  changes: {
+    id: string;
+    usedAmount: number;
+    discardedAmount: number;
+    discardReason: string | null;
+  }[],
   items: Item[],
 ) {
   if (new Set(changes.map((c) => c.id)).size !== changes.length)
     throw new Error('Each ingredient must appear once.');
   for (const c of changes) {
+    quantitySchema.parse(c.usedAmount);
+    quantitySchema.parse(c.discardedAmount);
     const i = items.find((i) => i.id === c.id);
     if (!i) throw new Error('An ingredient is no longer available.');
-    if (c.stock > i.stock) throw new Error('Remaining stock cannot increase after cooking.');
-    if (c.stock !== i.stock && !c.used && !c.discarded)
-      throw new Error('Mark use or discard before changing stock.');
+    if (i.quantity === null || i.unit === null)
+      throw new Error('Legacy stock needs a quantity before cooking.');
+    if (c.usedAmount + c.discardedAmount > i.quantity)
+      throw new Error('Used and discarded amounts cannot exceed available quantity.');
+    if (c.discardedAmount > 0 && !c.discardReason)
+      throw new Error('Choose a reason for discarded food.');
+    if (c.discardedAmount > 0) discardReasonSchema.parse(c.discardReason);
+    if (c.discardedAmount === 0 && c.discardReason !== null)
+      throw new Error('Choose a reason only when recording waste.');
   }
 }
 export type ScoredRecipe = Recipe & { score: number; points: number; totalPoints: number };

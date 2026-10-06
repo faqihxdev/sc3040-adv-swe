@@ -269,10 +269,17 @@ function HouseholdViews({
   resetDemo: () => Promise<void>;
 }) {
   const [preferencesOpen, setPreferencesOpen] = useState(false);
+  const [focusedItemId, setFocusedItemId] = useState<string | null>(null);
+  const [preferredIngredientId, setPreferredIngredientId] = useState<string | null>(null);
   return (
     <div>
       <div className="view-panel" hidden={tab !== 'inventory'}>
-        <Inventory state={state} mutate={mutate} />
+        <Inventory
+          state={state}
+          mutate={mutate}
+          focusedItemId={focusedItemId}
+          onFocusHandled={() => setFocusedItemId(null)}
+        />
       </div>
       <div className="view-panel" hidden={tab !== 'meals'}>
         <Meals
@@ -281,13 +288,29 @@ function HouseholdViews({
           onKitchen={() => setTab('inventory')}
           active={tab === 'meals'}
           preferencesOpen={preferencesOpen}
-          onPreferencesOpenChange={setPreferencesOpen}
+          onPreferencesOpenChange={(open) => {
+            setPreferencesOpen(open);
+            if (!open) setPreferredIngredientId(null);
+          }}
           onShowResults={() => setTab('meals')}
+          preferredIngredientId={preferredIngredientId}
         />
       </div>
       {tab === 'analytics' && (
         <div className="view-panel">
-          <Analytics state={state} />
+          <Analytics
+            state={state}
+            onCook={(itemId) => {
+              setFocusedItemId(null);
+              setPreferredIngredientId(itemId);
+              setTab('meals');
+              setPreferencesOpen(true);
+            }}
+            onInventory={(itemId) => {
+              setFocusedItemId(itemId);
+              setTab('inventory');
+            }}
+          />
         </div>
       )}
       <div className="view-panel" hidden={tab !== 'household'}>

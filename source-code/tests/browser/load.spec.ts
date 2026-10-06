@@ -63,7 +63,8 @@ test('SRS 5.1: six concurrent users load two isolated households with 50 items a
       const items = Array.from({ length: 50 }, (_, i) => ({
         household_id: householdId,
         name: `Kitchen ${group} rice ${i}`,
-        stock: 3,
+        quantity: 500,
+        unit: 'g',
         expiry_date: '2099-12-31',
       }));
       const saved = await admin.from('inventory').insert(items);

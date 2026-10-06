@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'node:crypto';
-import { demoIngredients, demoMeals } from '../src/domain/demo-data.ts';
+import { makeDemoSeed } from '../src/domain/demo-data.ts';
 const hosted = process.argv.includes('--hosted');
 process.loadEnvFile(hosted ? '.env.hosted' : '.env.local');
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -95,40 +95,24 @@ if (!existingItems.data?.length) {
     month: '2-digit',
     day: '2-digit',
   }).format(new Date());
-  const expiry = (n) => new Date(Date.parse(today) + n * 86400000).toISOString().slice(0, 10);
-  for (const [name, stock, days, category, location] of demoIngredients) {
-    const r = await owner.db.rpc('mutate', {
-      command: 'add_item',
-      payload: { name, stock, expiry_date: expiry(days), category, location },
-    });
-    if (r.error) throw r.error;
-  }
-  const inventory = await owner.db.from('inventory').select('*');
-  if (inventory.error) throw inventory.error;
-  const items = inventory.data;
-  const history = Array.from({ length: 14 }, (_, n) => ({
-    id: randomUUID(),
-    household_id: owner.h.id,
+  const generated = makeDemoSeed(today, randomUUID);
+  const currentHousehold = await owner.db.from('households').select('id,version').single();
+  if (currentHousehold.error) throw currentHousehold.error;
+  const history = generated.outcomes.map((outcome, n) => ({
+    ...outcome,
     actor_id: n % 2 ? owner.user.id : member.user.id,
-    recipe: { name: demoMeals[n % demoMeals.length].name },
-    ingredients: items
-      .filter((i) => demoMeals[n % demoMeals.length].ingredients.includes(i.name))
-      .map((i, j) => ({
-        id: i.id,
-        name: i.name,
-        category: i.category,
-        used: true,
-        discarded: n % 3 === 0 && j === 1,
-        before_stock: 4,
-        stock: 3,
-      })),
-    synthetic: true,
-    created_at: new Date(Date.parse(today + 'T12:00:00+08:00') - (n % 12) * 86400000).toISOString(),
   }));
-  const r = await admin.from('outcomes').insert(history);
+  const r = await admin.rpc('reset_demo', {
+    actor: owner.user.id,
+    household: currentHousehold.data.id,
+    expected_version: currentHousehold.data.version,
+    items_data: generated.items,
+    outcomes_data: history,
+    events_data: generated.events,
+  });
   if (r.error) throw r.error;
   console.log(
-    `Added ${demoIngredients.length} sample ingredients and 14 clearly marked synthetic meal records.`,
+    `Added ${generated.items.length} sample ingredients and 14 clearly marked synthetic meal records.`,
   );
 } else console.log('Existing inventory retained; no duplicate sample records added.');
 console.log(

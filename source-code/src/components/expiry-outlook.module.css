@@ -1,0 +1,20 @@
+.bar {
+  position: relative;
+  container-type: size;
+}
+
+.count {
+  position: absolute;
+  top: 0.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+@container (height < 1.75rem) {
+  .count {
+    top: auto;
+    bottom: calc(100% + 0.25rem);
+    color: var(--foreground);
+  }
+}

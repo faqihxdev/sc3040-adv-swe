@@ -72,6 +72,8 @@ After pulling dependency/schema changes, repeat install, migrate and types from 
 Seeding is optional after first setup and preserves existing inventory.
 
 The seed has 40 ingredients and synthetic history with relative dates.
+Older unmeasured inventory shows Set amount after migration. Enter an amount
+and unit before including those items in meal requests.
 
 - Demo mode: run `pnpm db:demo` after seeding and restart the app. Account → Reset
   to seed replaces demo inventory/history while retaining accounts.
@@ -95,9 +97,15 @@ AI is off on a fresh setup. For real meal/photo requests, add `OPENAI_API_KEY` t
 `.env.local` or repository-root `.env`, set `AI_ENABLED=true` in `.env.local`, and restart.
 
 Those requests incur OpenAI API charges. Automated tests mock AI responses.
-Models live in `src/server/recommendations.ts` and `photo-recognition.ts`.
+Models live in `src/server/recommendations.ts`, `photo-recognition.ts` and
+`meal-images.ts`. The project key needs recipe, vision and image-generation access.
 
-`AI_REQUEST_LIMIT` caps request counts. Monitor OpenAI spending separately.
+Dish illustrations use low quality, load concurrently and retry temporary failure
+once per image. The private cache expires after 24 hours and has row/byte limits.
+
+`AI_REQUEST_LIMIT` caps request counts. Track recipes, recognition, images, retries
+and evaluation against the S$10 project ceiling. Pause paid calls before exceeding
+it; budget increases require team approval.
 
 ## Where code lives
 
@@ -149,6 +157,8 @@ fixtures and mock AI responses.
 
 Before release, run `pnpm test:browser` for the full Chromium/Firefox matrix at
 360×800 and 1366×768. Chromium emulates mobile/touch; Firefox uses a narrow viewport.
+Some feature checks also use Pixel 8 and Laptop L dimensions. Record actual case
+viewports with the evidence.
 
 For recovery checks, pause local writes, then run `pnpm db:restore:practice`.
 

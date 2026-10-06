@@ -14,14 +14,17 @@ import { commandSchema } from '@/domain/model';
 
 const item = {
   name: 'Tomato',
-  stock: 3,
+  quantity: 250,
+  unit: 'g',
   expiry_date: '2026-10-05',
   category: 'Vegetables',
   location: '',
 };
 describe('photo drafts', () => {
-  it('requires manual stock and a real expiry date', () => {
-    expect(batchItemsSchema.safeParse([{ ...item, stock: 0 }]).success).toBe(false);
+  it('requires a measured quantity, unit and a real expiry date', () => {
+    expect(batchItemsSchema.safeParse([{ ...item, quantity: 0 }]).success).toBe(false);
+    expect(batchItemsSchema.safeParse([{ ...item, quantity: undefined }]).success).toBe(false);
+    expect(batchItemsSchema.safeParse([{ ...item, unit: undefined }]).success).toBe(false);
     expect(batchItemsSchema.safeParse([{ ...item, expiry_date: '2026-02-30' }]).success).toBe(
       false,
     );
@@ -33,7 +36,7 @@ describe('photo drafts', () => {
     expect(batchItemsSchema.safeParse(Array(10).fill(item)).success).toBe(true);
     expect(batchItemsSchema.safeParse(Array(11).fill(item)).success).toBe(false);
   });
-  it('deduplicates suggested names without inferring stock or expiry', () => {
+  it('deduplicates suggested names without inferring quantity, unit or expiry', () => {
     const result = normalisePhotoResult({
       items: [
         { name: ' Red  onion ', category: 'Vegetables', uncertain: true },
@@ -43,7 +46,8 @@ describe('photo drafts', () => {
       hasMore: false,
     });
     expect(result.items).toHaveLength(1);
-    expect(result.items[0]).not.toHaveProperty('stock');
+    expect(result.items[0]).not.toHaveProperty('quantity');
+    expect(result.items[0]).not.toHaveProperty('unit');
     expect(result.items[0]).not.toHaveProperty('expiry_date');
   });
   it('accepts no-food responses and rejects malformed model data', () => {

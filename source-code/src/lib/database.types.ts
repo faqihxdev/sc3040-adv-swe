@@ -110,7 +110,9 @@ export type Database = {
           id: string;
           location: string;
           name: string;
+          quantity: number | null;
           stock: number;
+          unit: string | null;
           updated_at: string;
           updated_by: string | null;
           version: number;
@@ -123,7 +125,9 @@ export type Database = {
           id?: string;
           location?: string;
           name: string;
-          stock: number;
+          quantity?: number | null;
+          stock?: number;
+          unit?: string | null;
           updated_at?: string;
           updated_by?: string | null;
           version?: number;
@@ -136,7 +140,9 @@ export type Database = {
           id?: string;
           location?: string;
           name?: string;
+          quantity?: number | null;
           stock?: number;
+          unit?: string | null;
           updated_at?: string;
           updated_by?: string | null;
           version?: number;
@@ -233,6 +239,85 @@ export type Database = {
         };
         Relationships: [];
       };
+      quantity_events: {
+        Row: {
+          activity_id: number | null;
+          amount: number;
+          before_quantity: number | null;
+          category: string;
+          created_at: string;
+          discard_reason: string | null;
+          household_id: string;
+          id: string;
+          item_id: string;
+          kind: string;
+          name: string;
+          quantity: number;
+          sequence: number;
+          synthetic: boolean;
+          unit: string;
+          voided: boolean;
+        };
+        Insert: {
+          activity_id?: number | null;
+          amount: number;
+          before_quantity?: number | null;
+          category: string;
+          created_at?: string;
+          discard_reason?: string | null;
+          household_id: string;
+          id?: string;
+          item_id: string;
+          kind: string;
+          name: string;
+          quantity: number;
+          sequence?: never;
+          synthetic?: boolean;
+          unit: string;
+          voided?: boolean;
+        };
+        Update: {
+          activity_id?: number | null;
+          amount?: number;
+          before_quantity?: number | null;
+          category?: string;
+          created_at?: string;
+          discard_reason?: string | null;
+          household_id?: string;
+          id?: string;
+          item_id?: string;
+          kind?: string;
+          name?: string;
+          quantity?: number;
+          sequence?: never;
+          synthetic?: boolean;
+          unit?: string;
+          voided?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'quantity_events_activity_id_fkey';
+            columns: ['activity_id'];
+            isOneToOne: false;
+            referencedRelation: 'activity';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'quantity_events_household_id_fkey';
+            columns: ['household_id'];
+            isOneToOne: false;
+            referencedRelation: 'households';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'quantity_events_item_id_fkey';
+            columns: ['item_id'];
+            isOneToOne: false;
+            referencedRelation: 'inventory';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -241,6 +326,14 @@ export type Database = {
       add_inventory_batch: {
         Args: { expected_household: string; items_data: Json; request_id: string };
         Returns: Json;
+      };
+      claim_meal_image: {
+        Args: { actor: string; cache_key: string; household: string; session_id: string };
+        Returns: Json;
+      };
+      complete_meal_image: {
+        Args: { cache_key: string; image_data: string; media_type: string };
+        Returns: undefined;
       };
       confirm_meal: {
         Args: {
@@ -252,6 +345,7 @@ export type Database = {
         };
         Returns: string;
       };
+      fail_meal_image: { Args: { cache_key: string }; Returns: undefined };
       member_directory: {
         Args: Record<PropertyKey, never>;
         Returns: {
@@ -265,9 +359,14 @@ export type Database = {
         Returns: undefined;
       };
       reserve_ai: { Args: { actor: string; request_limit: number }; Returns: string };
+      reserve_meal_image: {
+        Args: { actor: string; cache_key: string; request_limit: number };
+        Returns: string;
+      };
       reset_demo: {
         Args: {
           actor: string;
+          events_data: Json;
           expected_version: number;
           household: string;
           items_data: Json;

@@ -25,7 +25,7 @@ describe('FR01 / PR03: deterministic eligibility and scoring', () => {
   test('empty, deleted, past-date, excluded and manually omitted items are ineligible', () => {
     const items = [
       ingredient('valid'),
-      ingredient('empty', { stock: 0 }),
+      ingredient('empty', { quantity: 0 }),
       ingredient('deleted', { deleted: true }),
       ingredient('past', { expiry_date: '2026-09-30' }),
       ingredient('excluded', { name: 'Milk' }),
@@ -155,8 +155,8 @@ describe('FR02 / PR04: candidate validation', () => {
     expect(meal?.trackedItems.map((item) => item.id)).toEqual(['used']);
   });
   test('retains three feasible meals with the full 40-ingredient demo inventory', () => {
-    const items = demoIngredients.map(([name, stock], index) =>
-      ingredient(`demo-${index}`, { name, stock }),
+    const items = demoIngredients.map(([name], index) =>
+      ingredient(`demo-${index}`, { name, quantity: 500, unit: 'g' }),
     );
     const staples = [
       { id: 'water', name: 'Water' },
@@ -260,21 +260,27 @@ describe('FR02 / PR04: candidate validation', () => {
 
 describe('FR06 / FR07: explicit cooking changes', () => {
   const item = ingredient('a');
-  test('defaults keep stock unchanged and used/discarded can both be true', () => {
+  test('records exact used and discarded amounts', () => {
     expect(() =>
-      validateChanges([{ id: 'a', stock: 3, used: false, discarded: false }], [item]),
+      validateChanges(
+        [{ id: 'a', usedAmount: 0, discardedAmount: 0, discardReason: null }],
+        [item],
+      ),
     ).not.toThrow();
     expect(() =>
-      validateChanges([{ id: 'a', stock: 1, used: true, discarded: true }], [item]),
+      validateChanges(
+        [{ id: 'a', usedAmount: 100, discardedAmount: 50, discardReason: 'prep' }],
+        [item],
+      ),
     ).not.toThrow();
   });
   test.each([
-    [{ id: 'a', stock: 4, used: true, discarded: false }],
-    [{ id: 'a', stock: 1, used: false, discarded: false }],
-    [{ id: 'missing', stock: 1, used: true, discarded: false }],
+    [{ id: 'a', usedAmount: 501, discardedAmount: 0, discardReason: null }],
+    [{ id: 'a', usedAmount: 0, discardedAmount: 501, discardReason: 'prep' }],
+    [{ id: 'missing', usedAmount: 1, discardedAmount: 0, discardReason: null }],
     [
-      { id: 'a', stock: 1, used: true, discarded: false },
-      { id: 'a', stock: 1, used: true, discarded: false },
+      { id: 'a', usedAmount: 1, discardedAmount: 0, discardReason: null },
+      { id: 'a', usedAmount: 1, discardedAmount: 0, discardReason: null },
     ],
   ])('rejects contradictory, unavailable or duplicate changes', (...changes) => {
     expect(() => validateChanges(changes, [item])).toThrow();
@@ -294,7 +300,8 @@ describe('FR04: dates and command inputs', () => {
       commandSchema.safeParse({
         command: 'add_item',
         name: 'Rice',
-        stock: 3,
+        quantity: 500,
+        unit: 'g',
         expiry_date: '2026-09-01',
         category: '',
         location: '',

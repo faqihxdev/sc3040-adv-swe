@@ -1,64 +1,143 @@
-.steam {
-  position: absolute;
-  top: 12px;
-  display: flex;
-  gap: 6px;
+.kitchen {
+  width: min(100%, 280px);
+  height: auto;
+  color: var(--accent-foreground);
 }
-
-.steam span {
-  width: 2px;
-  height: 10px;
-  border-radius: 999px;
-  background: currentColor;
+.shadow {
+  fill: var(--foreground);
+  opacity: 0.07;
+  transform-origin: 137px 195px;
+  animation: shadow 2.8s ease-in-out infinite;
+}
+.pan {
+  transform-origin: 226px 136px;
+  animation: toss-pan 2.8s ease-in-out infinite;
+}
+.bowl {
+  fill: var(--primary);
+}
+.handle {
+  fill: var(--secondary-foreground);
+}
+.rim {
+  fill: none;
+  stroke: var(--accent-foreground);
+  stroke-width: 5px;
+  stroke-linecap: round;
+}
+.shine {
+  fill: none;
+  stroke: var(--primary-foreground);
+  stroke-width: 3px;
+  stroke-linecap: round;
+  opacity: 0.2;
+}
+.food {
+  transform-origin: 137px 125px;
+  animation: toss-food 2.8s ease-in-out infinite;
+}
+.carrot {
+  fill: var(--primary);
+}
+.leaf {
+  fill: var(--accent-foreground);
+}
+.rice {
+  stroke: var(--foreground);
+}
+.steam path {
   opacity: 0;
-  animation: waft 2.4s ease-in-out infinite;
+  animation: waft 2.8s ease-out infinite;
 }
-
-.steam span:nth-child(2) {
-  animation-delay: 0.4s;
+.steam path:nth-child(2) {
+  animation-delay: 0.45s;
 }
-
-.steam span:nth-child(3) {
-  animation-delay: 0.8s;
+.steam path:nth-child(3) {
+  animation-delay: 0.9s;
 }
-
+.heat {
+  color: var(--primary);
+  opacity: 0.7;
+}
 .caption {
-  animation: appear 220ms ease-out;
+  animation: appear 240ms ease-out;
 }
 
-@keyframes waft {
+@keyframes toss-pan {
   0%,
+  65%,
   100% {
-    opacity: 0;
-    transform: translateY(3px);
+    transform: translateY(0) rotate(0);
+  }
+  17% {
+    transform: translateY(3px) rotate(-6deg);
+  }
+  29% {
+    transform: translateY(-5px) rotate(9deg);
+  }
+  44% {
+    transform: translateY(1px) rotate(-3deg);
+  }
+}
+@keyframes toss-food {
+  0%,
+  65%,
+  100% {
+    transform: translate(0, 0) rotate(0);
+  }
+  17% {
+    transform: translate(-2px, 1px) rotate(-6deg);
+  }
+  38% {
+    transform: translate(-9px, -48px) rotate(-25deg);
+  }
+  56% {
+    transform: translate(2px, -7px) rotate(5deg);
+  }
+}
+@keyframes shadow {
+  0%,
+  65%,
+  100% {
+    transform: scaleX(1);
   }
   35% {
-    opacity: 0.65;
-  }
-  75% {
-    opacity: 0;
-    transform: translateY(-7px);
+    transform: scaleX(0.85);
   }
 }
-
+@keyframes waft {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  25% {
+    opacity: 0.25;
+  }
+  85%,
+  100% {
+    opacity: 0;
+    transform: translateY(-18px);
+  }
+}
 @keyframes appear {
   from {
     opacity: 0;
-    transform: translateY(3px);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
-
 @media (prefers-reduced-motion: reduce) {
-  .steam span {
-    opacity: 0.5;
-    animation: none;
-  }
-
+  .pan,
+  .food,
+  .shadow,
+  .steam path,
   .caption {
     animation: none;
+  }
+  .steam path {
+    opacity: 0.2;
   }
 }

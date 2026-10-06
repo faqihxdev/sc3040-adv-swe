@@ -5,7 +5,8 @@ export function ingredient(id: string, patch: Partial<Item> = {}): Item {
     id,
     household_id: 'household',
     name: `Food ${id}`,
-    stock: 3,
+    quantity: 500,
+    unit: 'g',
     expiry_date: today,
     category: 'Vegetables',
     location: 'Fridge',
@@ -29,7 +30,7 @@ export function recipe(ids: string[], patch: Partial<Recipe> = {}): Recipe {
     summary: 'A meal from confirmed ingredients.',
     servings: 2,
     cookingMinutes: 20,
-    ingredients: ids.map((ingredientId) => ({ ingredientId, estimatedAmount: 'Some' })),
+    ingredients: ids.map((ingredientId) => ({ ingredientId, amount: 100, unit: 'g' })),
     steps: ['Prepare the ingredients.', 'Combine the ingredients.', 'Cook thoroughly.', 'Serve.'],
     ...patch,
   };

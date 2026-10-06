@@ -1,6 +1,14 @@
 import { z } from 'zod';
+import {
+  discardReasonSchema,
+  positiveQuantitySchema,
+  quantitySchema,
+  unitSchema,
+  type DiscardReason,
+  type Unit,
+} from './quantities';
+export type { Unit } from './quantities';
 
-export const stockLabels = ['Empty', 'Very Low', 'Low', 'Medium', 'High', 'Very High'] as const;
 export const dateSchema = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, 'Enter a valid date.')
@@ -8,15 +16,23 @@ export const dateSchema = z
     (v) => !Number.isNaN(Date.parse(v)) && new Date(v).toISOString().slice(0, 10) === v,
     'Enter a valid date.',
   );
-export const itemInput = z.object({
+const itemFields = {
   name: z.string().trim().min(1).max(100),
-  stock: z.number().int().min(0).max(5),
+  quantity: quantitySchema,
+  unit: unitSchema,
   expiry_date: dateSchema,
   category: z.string().trim().max(50),
   location: z.string().trim().max(50),
-});
+};
+export const itemInput = z.object(itemFields);
 export type ItemInput = z.infer<typeof itemInput>;
-export type Item = ItemInput & {
+export type Item = {
+  name: string;
+  quantity: number | null;
+  unit: Unit | null;
+  expiry_date: string;
+  category: string;
+  location: string;
   id: string;
   household_id: string;
   version: number;
@@ -45,8 +61,15 @@ export type OutcomeIngredient = {
   category: string;
   used: boolean;
   discarded: boolean;
-  stock: number;
-  before_stock: number;
+  stock?: number;
+  before_stock?: number;
+  unit?: Unit | null;
+  before_quantity?: number | null;
+  quantity?: number | null;
+  used_amount?: number;
+  expiry_date?: string | null;
+  discarded_amount?: number;
+  discard_reason?: DiscardReason | null;
 };
 export type Outcome = {
   id: string;
@@ -65,6 +88,23 @@ export type AppState = {
   exclusions: string[];
   aiEnabled: boolean;
   demoResetEnabled?: boolean;
+  quantityEvents?: QuantityEvent[];
+};
+export type QuantityEvent = {
+  id: string;
+  sequence?: number;
+  voided?: boolean;
+  item_id: string;
+  name: string;
+  category: string;
+  unit: Unit;
+  kind: 'opening' | 'restock' | 'used' | 'discarded' | 'adjustment' | 'undo';
+  amount: number;
+  before_quantity: number | null;
+  quantity: number;
+  created_at: string;
+  synthetic: boolean;
+  discard_reason?: DiscardReason | null;
 };
 export const requestSchema = z.object({
   servings: z.number().int().min(1).max(4),
@@ -80,7 +120,7 @@ export const recipeSchema = z.object({
   servings: z.number().int().min(1).max(4),
   cookingMinutes: z.number().int().min(1).max(1440),
   ingredients: z
-    .array(z.object({ ingredientId: z.string(), estimatedAmount: z.string().min(1).max(100) }))
+    .array(z.object({ ingredientId: z.string(), amount: positiveQuantitySchema, unit: unitSchema }))
     .min(1)
     .max(50),
   steps: z.array(z.string().min(1).max(800)).min(4).max(6),
@@ -102,9 +142,9 @@ export const confirmationSchema = z.object({
       z.object({
         id: z.uuid(),
         version: z.number().int().positive(),
-        stock: z.number().int().min(0).max(5),
-        used: z.boolean(),
-        discarded: z.boolean(),
+        usedAmount: quantitySchema,
+        discardedAmount: quantitySchema,
+        discardReason: discardReasonSchema.nullable(),
       }),
     )
     .min(1)
@@ -112,7 +152,7 @@ export const confirmationSchema = z.object({
 });
 export type Change = z.infer<typeof confirmationSchema>['changes'][number];
 const version = z.number().int().positive();
-export const commandSchema = z.discriminatedUnion('command', [
+export const commandSchema = z.union([
   z.object({ command: z.literal('create_household'), name: z.string().trim().min(1).max(80) }),
   z.object({
     command: z.literal('join_household'),
@@ -125,17 +165,27 @@ export const commandSchema = z.discriminatedUnion('command', [
     command: z.literal('preferences'),
     exclusions: z.array(z.string().trim().min(1).max(80)).max(30),
   }),
-  itemInput.extend({ command: z.literal('add_item'), stock: z.number().int().min(1).max(5) }),
+  itemInput
+    .and(z.object({ command: z.literal('add_item') }))
+    .refine((v) => v.quantity > 0, 'Quantity must be positive.'),
   z.object({
     command: z.literal('add_items'),
     householdId: z.uuid(),
     requestId: z.uuid(),
     items: z
-      .array(itemInput.extend({ stock: z.number().int().min(1).max(5) }))
+      .array(itemInput.refine((v) => v.quantity > 0, 'Quantity must be positive.'))
       .min(1)
       .max(10),
   }),
-  itemInput.extend({ command: z.literal('edit_item'), id: z.uuid(), version }),
+  itemInput.and(z.object({ command: z.literal('edit_item'), id: z.uuid(), version })),
+  z.object({
+    command: z.literal('adjust_item'),
+    id: z.uuid(),
+    version,
+    kind: z.enum(['restock', 'discarded']),
+    amount: positiveQuantitySchema,
+    discardReason: discardReasonSchema.nullable(),
+  }),
   z.object({ command: z.literal('remove_item'), id: z.uuid(), version }),
   z.object({ command: z.literal('undo') }),
   z.object({ command: z.literal('invite') }),

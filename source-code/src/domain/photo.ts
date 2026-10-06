@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { itemInput } from './model';
+import { positiveQuantitySchema } from './quantities';
 
 export const PHOTO_LIMITS = {
   items: 10,
@@ -31,7 +32,7 @@ export const photoResultSchema = z.object({
   hasMore: z.boolean(),
 });
 export type PhotoResult = z.infer<typeof photoResultSchema>;
-export const newItemSchema = itemInput.extend({ stock: z.number().int().min(1).max(5) });
+export const newItemSchema = itemInput.extend({ quantity: positiveQuantitySchema });
 export const batchItemsSchema = z.array(newItemSchema).min(1).max(PHOTO_LIMITS.items);
 export function ingredientKey(name: string) {
   return name.trim().replace(/\s+/g, ' ').toLocaleLowerCase('en');

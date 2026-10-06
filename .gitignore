@@ -13,6 +13,7 @@ vendor/
 dist/
 build/
 out/
+output/imagegen/
 *.egg-info/
 __pycache__/
 *.py[cod]

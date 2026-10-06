@@ -51,6 +51,7 @@ if (mode === 'practice') {
     'public.inventory',
     'public.activity',
     'public.outcomes',
+    'public.quantity_events',
   ];
   const fingerprints = tables
     .flatMap((table) => {
@@ -62,7 +63,7 @@ if (mode === 'practice') {
       ];
     })
     .join(',');
-  const sql = `select json_build_object('users',(select count(*) from auth.users),'households',(select count(*) from public.households),'memberships',(select count(*) from public.memberships),'inventory',(select count(*) from public.inventory),'activity',(select count(*) from public.activity),'outcomes',(select count(*) from public.outcomes),'rls',(select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relrowsecurity),'dataFingerprints',json_build_object(${fingerprints}))::text`;
+  const sql = `select json_build_object('users',(select count(*) from auth.users),'households',(select count(*) from public.households),'memberships',(select count(*) from public.memberships),'inventory',(select count(*) from public.inventory),'activity',(select count(*) from public.activity),'outcomes',(select count(*) from public.outcomes),'quantityEvents',(select count(*) from public.quantity_events),'rls',(select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relrowsecurity),'dataFingerprints',json_build_object(${fingerprints}))::text`;
   const before = query('postgres', sql);
   try {
     docker(['exec', container, 'createdb', '-U', 'postgres', '--template=template0', database]);

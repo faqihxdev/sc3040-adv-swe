@@ -8,7 +8,7 @@ begin
  if uid is null or teammate is null then raise exception 'Run db:seed before this test.'; end if;
  select household_id into hid from public.memberships where user_id=uid;
  perform set_config('request.jwt.claim.sub',uid::text,true);
- batch := '[{"name":"Photo test tomato","stock":3,"expiry_date":"2026-10-05","category":"Vegetables","location":"Fridge"},{"name":"Photo test onion","stock":2,"expiry_date":"2026-10-06","category":"Vegetables","location":"Pantry"}]';
+ batch := '[{"name":"Photo test tomato","quantity":300,"unit":"g","expiry_date":"2026-10-05","category":"Vegetables","location":"Fridge"},{"name":"Photo test onion","quantity":2,"unit":"piece","expiry_date":"2026-10-06","category":"Vegetables","location":"Pantry"}]';
  select count(*) into before_count from public.inventory where household_id=hid and not deleted;
  saved := public.add_inventory_batch(hid,rid,batch);
  retried := public.add_inventory_batch(hid,rid,batch);
@@ -26,6 +26,7 @@ begin
  assert (select count(*) from public.inventory where household_id=hid and not deleted)=before_count+2, 'Invalid row left a partial batch';
  perform public.mutate('undo','{}');
  assert (select count(*) from public.inventory where household_id=hid and not deleted)=before_count, 'Batch undo was partial';
+ assert (select count(*) from public.quantity_events where household_id=hid and voided)=2, 'Batch opening events were not voided';
  failed:=false;
  begin perform public.add_inventory_batch(hid,gen_random_uuid(),'[]'); exception when sqlstate 'P0001' then failed:=true; end;
  assert failed, 'Empty batch accepted';
@@ -36,10 +37,11 @@ begin
  assert (saved->>'count')::int=10, 'Ten-entry batch rejected';
  perform public.mutate('undo','{}');
  assert (select count(*) from public.inventory where household_id=hid and not deleted)=before_count, 'Ten-entry undo was partial';
+ assert (select count(*) from public.quantity_events where household_id=hid and voided)=12, 'Ten-entry batch events were not voided';
  rid:=gen_random_uuid(); saved:=public.add_inventory_batch(hid,rid,batch); first_id:=(saved->'ids'->>0)::uuid;
  perform set_config('request.jwt.claim.sub',teammate::text,true);
  select * into edited from public.inventory where id=first_id;
- perform public.mutate('edit_item',to_jsonb(edited) || '{"stock":1}');
+ perform public.mutate('edit_item',to_jsonb(edited) || '{"quantity":200,"unit":"g"}');
  perform set_config('request.jwt.claim.sub',uid::text,true);
  failed:=false;
  begin perform public.mutate('undo','{}'); exception when sqlstate 'PT409' then failed:=true; end;

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ComponentProps, type ReactNode } from
 import { Camera, Upload, ImagePlus, Trash2, Plus, ScanLine, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import type { AppState, ItemInput } from '@/domain/model';
-import { stockLabels } from '@/domain/model';
+import { formatQuantity, type Unit } from '@/domain/quantities';
 import { batchItemsSchema, ingredientKey, PHOTO_LIMITS } from '@/domain/photo';
 import { preparePhoto, recognisePhoto } from '@/lib/photo';
 import { message } from '@/lib/api';
@@ -12,11 +12,20 @@ import { cn } from '@/lib/utils';
 import { todaySingapore } from '@/domain/meals';
 import { Modal, Busy, ErrorText } from './common';
 import { Button } from './ui/button';
-import { SelectField } from './ui/select-field';
 import { Disclosure } from './ui/disclosure';
 import type { Mutate } from './workspace';
+import { QuantityField } from './quantity-field';
 
-type Draft = ItemInput & { key: string; uncertain: boolean };
+type Draft = {
+  name: string;
+  quantity: number | null;
+  unit: Unit | null;
+  expiry_date: string;
+  category: string;
+  location: string;
+  key: string;
+  uncertain: boolean;
+};
 type Batch = { command: 'add_items'; householdId: string; requestId: string; items: ItemInput[] };
 export type PhotoImportView = ComponentProps<typeof Modal> & {
   methodDisabled: boolean;
@@ -138,7 +147,8 @@ export function PhotoImport({
         result.items.map((item) => ({
           ...item,
           key: crypto.randomUUID(),
-          stock: 0,
+          quantity: null,
+          unit: null,
           expiry_date: '',
           location: '',
         })),
@@ -153,7 +163,7 @@ export function PhotoImport({
       }
     }
   }
-  function update(key: string, patch: Partial<ItemInput>) {
+  function update(key: string, patch: Partial<Draft>) {
     setDrafts((rows) => rows.map((row) => (row.key === key ? { ...row, ...patch } : row)));
     setInvalid((errors) =>
       Object.fromEntries(
@@ -165,9 +175,10 @@ export function PhotoImport({
     setError('');
   }
   function review() {
-    const items = drafts.map(({ name, stock, expiry_date, category, location }) => ({
+    const items = drafts.map(({ name, quantity, unit, expiry_date, category, location }) => ({
       name,
-      stock,
+      quantity,
+      unit,
       expiry_date,
       category,
       location,
@@ -179,8 +190,8 @@ export function PhotoImport({
         const [index, field] = issue.path;
         if (typeof index === 'number' && typeof field === 'string')
           errors[`${drafts[index].key}-${field}`] =
-            field === 'stock'
-              ? 'Choose a stock level.'
+            field === 'quantity' || field === 'unit'
+              ? 'Enter an amount and choose a unit.'
               : field === 'expiry_date'
                 ? 'Enter a valid expiry date.'
                 : 'Enter an ingredient name.';
@@ -188,7 +199,14 @@ export function PhotoImport({
       setInvalid(errors);
       setError(drafts.length ? 'Check the highlighted fields.' : 'Add at least one ingredient.');
       const first = Object.keys(errors)[0];
-      if (first) form.current?.querySelector<HTMLElement>(`[data-field="${first}"]`)?.focus();
+      if (first) {
+        const field = first.endsWith('-unit') ? first.replace(/-unit$/, '-quantity') : first;
+        const target = form.current?.querySelector<HTMLElement>(`[data-field="${field}"]`);
+        (target?.matches('input,button')
+          ? target
+          : target?.querySelector<HTMLElement>('input,button')
+        )?.focus();
+      }
       return;
     }
     setError('');
@@ -224,7 +242,8 @@ export function PhotoImport({
       {
         key: crypto.randomUUID(),
         name: '',
-        stock: 0,
+        quantity: null,
+        unit: null,
         expiry_date: '',
         category: '',
         location: '',
@@ -251,7 +270,7 @@ export function PhotoImport({
         step === 'photo'
           ? 'Arrange up to 10 food types clearly in one photo.'
           : step === 'review'
-            ? 'Check names, then choose stock and expiry dates.'
+            ? 'Check names, then enter an amount, unit and expiry date.'
             : 'Nothing is added until you confirm.'
       }
       onClose={() => dismiss()}
@@ -472,32 +491,23 @@ export function PhotoImport({
                 {duplicateNames.has(ingredientKey(draft.name)) && (
                   <p className="helper">Already in inventory. Confirming adds a separate entry.</p>
                 )}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="field min-w-0">
-                    Stock level
-                    <div
-                      data-field={`${draft.key}-stock`}
-                      tabIndex={-1}
-                      className={cn(
-                        'rounded-lg',
-                        invalid[`${draft.key}-stock`] && 'ring-2 ring-destructive',
-                      )}
-                      aria-invalid={Boolean(invalid[`${draft.key}-stock`])}
-                    >
-                      <SelectField
-                        label={`Stock level for ingredient ${index + 1}`}
-                        value={String(draft.stock)}
-                        onValueChange={(value) => update(draft.key, { stock: Number(value) })}
-                        options={[
-                          { value: '0', label: 'Choose stock' },
-                          ...stockLabels
-                            .slice(1)
-                            .map((label, i) => ({ value: String(i + 1), label })),
-                        ]}
-                      />
-                    </div>
-                    {invalid[`${draft.key}-stock`] && (
-                      <p className="text-xs text-destructive">Choose a stock level.</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div
+                    data-field={`${draft.key}-quantity`}
+                    className={cn(
+                      (invalid[`${draft.key}-quantity`] || invalid[`${draft.key}-unit`]) &&
+                        'rounded-lg ring-2 ring-destructive',
+                    )}
+                  >
+                    <QuantityField
+                      amount={draft.quantity ?? null}
+                      unit={draft.unit ?? null}
+                      onAmountChange={(value) => update(draft.key, { quantity: value })}
+                      onUnitChange={(value) => update(draft.key, { unit: value })}
+                      label="Amount"
+                    />
+                    {(invalid[`${draft.key}-quantity`] || invalid[`${draft.key}-unit`]) && (
+                      <p className="text-xs text-destructive">Enter an amount and unit.</p>
                     )}
                   </div>
                   <label className="field min-w-0">
@@ -570,7 +580,7 @@ export function PhotoImport({
               <li key={index} className="py-3">
                 <p className="font-semibold text-sm">{item.name}</p>
                 <p className="helper mt-1">
-                  {stockLabels[item.stock]} stock · {item.expiry_date}
+                  {formatQuantity(item.quantity ?? null, item.unit ?? null)} · {item.expiry_date}
                   {item.location ? ` · ${item.location}` : ''}
                 </p>
                 {item.expiry_date < todaySingapore() && (

@@ -55,6 +55,21 @@ node scripts/verify-hosted.mjs
 - The owner deploys production through the CLI. Deployment preserves existing demo data.
 - The verifier checks landing/login, both accounts, shared access and reset permissions with read-only inventory checks.
 
+## Quantity migration
+
+The hosted demo includes `202610030001_quantities`, the three
+`20261005000*` image-cache migrations and `202610060001_outcome_expiry`.
+Use `migration-list` to verify the target before a release.
+
+- Back up before applying migrations. Existing unmeasured items show Set amount.
+- Enter real amounts and units, or use the demo owner's reset for fresh sample data.
+- New confirmations save expiry snapshots. Older missing snapshots remain untracked.
+- Quantity confirmation contracts differ from the stock-band version. Check schema
+  compatibility before restoring an older app deployment.
+
+The demo is deployed. Formal acceptance, a reviewed release revision and verified
+GitLab submission remain separate checks.
+
 ## Release checks
 
 From the repository root:
@@ -89,7 +104,8 @@ Reapply hosted auth config and update Vercel `APP_ORIGIN` before redeploying.
 
 - Registration is disabled; passwords are in ignored `.demo-credentials.local`.
 - Account → Reset to seed refreshes synthetic inventory/history with rolling dates. Only the allowlisted owner can reset; accounts, membership and AI usage survive.
-- Monitor OpenAI spending separately from the request-count cap.
+- Track all AI costs, including dish images and retries, against the S$10 project ceiling. Pause paid calls before exceeding it.
+- Image-cache rows expire after 24 hours; the cache is private and capped at 100 rows and 64 MB.
 - Keep database backups; inactive Free projects can pause.
 - Hosted signup/recovery needs custom SMTP.
 

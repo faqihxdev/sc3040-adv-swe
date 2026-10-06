@@ -59,10 +59,13 @@ it('starts independent reads together instead of putting outcomes behind invento
   releases.get('profiles')!();
   releases.get('households')!();
   await flush();
-  expect(started).toEqual(expect.arrayContaining(['inventory', 'members', 'activity', 'outcomes']));
+  expect(started).toEqual(
+    expect.arrayContaining(['inventory', 'members', 'activity', 'outcomes', 'quantity_events']),
+  );
   releases.get('inventory')!();
   releases.get('activity')!();
   releases.get('outcomes')!();
+  releases.get('quantity_events')!();
   expect((await pending).demoResetEnabled).toBe(true);
 });
 

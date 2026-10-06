@@ -126,7 +126,8 @@ export async function addRice(page: Page): Promise<Item> {
   const response = await action(page, {
     command: 'add_item',
     name: 'Rice',
-    stock: 3,
+    quantity: 500,
+    unit: 'g',
     expiry_date: '2099-12-31',
     category: 'Grains',
     location: 'Pantry',
@@ -137,13 +138,25 @@ export async function addRice(page: Page): Promise<Item> {
 
 // Stand-in for the external recommender, with an independently issued local ticket.
 // The confirmation endpoint and database are real. This is not an AI quality trial.
-export function mealFixture(kitchen: Kitchen, rice: Item): RankedMeal {
+export function mealFixture(
+  kitchen: Kitchen,
+  rice: Item,
+  additionalItems: Item[] = [],
+): RankedMeal {
+  const trackedItems = [rice, ...additionalItems];
   const recipe: Recipe = {
     name: 'Simple rice',
     summary: 'A local browser-test recipe.',
     servings: 2,
     cookingMinutes: 20,
-    ingredients: [{ ingredientId: rice.id, estimatedAmount: 'One bowl' }],
+    ingredients: [
+      { ingredientId: rice.id, amount: 100, unit: 'g' },
+      ...additionalItems.map((item) => ({
+        ingredientId: item.id,
+        amount: Math.min(item.quantity ?? 100, 100),
+        unit: item.unit ?? 'g',
+      })),
+    ],
     steps: ['Rinse the rice.', 'Add water.', 'Cook until ready.', 'Serve the rice.'],
   };
   const payload = Buffer.from(
@@ -151,9 +164,10 @@ export function mealFixture(kitchen: Kitchen, rice: Item): RankedMeal {
       id: randomUUID(),
       userId: kitchen.owner.id,
       householdId: kitchen.householdId,
+      format: 2,
       expires: Date.now() + 86400000,
       recipe,
-      trackedIds: [rice.id],
+      trackedIds: trackedItems.map((item) => item.id),
     }),
   ).toString('base64url');
   const signature = createHmac('sha256', 'useeatnow-local-browser-test-signing-key')
@@ -162,11 +176,11 @@ export function mealFixture(kitchen: Kitchen, rice: Item): RankedMeal {
   return {
     ...recipe,
     score: 100,
-    points: 1,
-    totalPoints: 1,
-    coverage: 1,
-    ingredientNames: { [rice.id]: 'Rice' },
-    trackedItems: [rice],
+    points: trackedItems.length,
+    totalPoints: trackedItems.length,
+    coverage: trackedItems.length,
+    ingredientNames: Object.fromEntries(trackedItems.map((item) => [item.id, item.name])),
+    trackedItems,
     token: `${payload}.${signature}`,
   };
 }

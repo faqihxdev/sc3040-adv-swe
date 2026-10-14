@@ -92,7 +92,7 @@ begin
  assert (select count(*) from public.activity where household_id=hid)=1, 'Activity was not reset';
  assert (select count(*) from private.inventory_imports where household_id=hid)=0, 'Import replay cache survived';
  assert (select version from public.households where id=hid)=version_before+1, 'Reset version was not advanced';
- assert (select count(*) from private.ai_calls)=budget_before, 'AI usage allowance was reset';
+ assert (select count(*) from private.ai_calls)=budget_before, 'AI usage history was reset';
  assert (select count(*) from public.profiles)=profiles_before, 'Accounts changed';
  assert (select count(*) from public.memberships)=members_before, 'Membership changed';
  assert not exists(select 1 from public.profiles where id in
@@ -105,6 +105,6 @@ begin
  failed:=false;
  begin perform public.reset_demo(uid,hid,version_before,items_data,outcomes_data,events_data); exception when sqlstate 'PT409' then failed:=true; end;
  assert failed, 'Duplicate reset was accepted';
- raise notice 'PASS: canonical 40-item/14-outcome reset, dietary exclusions cleared for all members, owner/scope/version checks, rollback, preserved accounts/members/AI quota';
+ raise notice 'PASS: canonical 40-item/14-outcome reset, dietary exclusions cleared for all members, owner/scope/version checks, rollback, preserved accounts/members/AI usage history';
 end $$;
 rollback;

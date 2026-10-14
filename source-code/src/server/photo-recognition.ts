@@ -16,7 +16,6 @@ export async function recogniseIngredients(
   const admin = adminDb();
   const { data: callId, error } = await admin.rpc('reserve_ai', {
     actor: actorId,
-    request_limit: Number(process.env.AI_REQUEST_LIMIT ?? 100),
   });
   if (error) databaseError(error);
   const provider = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });

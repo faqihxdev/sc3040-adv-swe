@@ -358,9 +358,14 @@ export type Database = {
         Args: { call_id: string; inputs: number; outputs: number };
         Returns: undefined;
       };
-      reserve_ai: { Args: { actor: string; request_limit: number }; Returns: string };
+      reserve_ai: {
+        Args: { actor: string } | { actor: string; request_limit: number };
+        Returns: string;
+      };
       reserve_meal_image: {
-        Args: { actor: string; cache_key: string; request_limit: number };
+        Args:
+          | { actor: string; cache_key: string }
+          | { actor: string; cache_key: string; request_limit: number };
         Returns: string;
       };
       reset_demo: {

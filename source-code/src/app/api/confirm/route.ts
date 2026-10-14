@@ -23,7 +23,10 @@ export async function POST(request: Request) {
       actor: state.user.id,
       household: state.household.id,
       session_id: ticket.id,
-      recipe_data: ticket.recipe as unknown as Json,
+      recipe_data: {
+        ...ticket.recipe,
+        ...(ticket.source ? { source: ticket.source } : {}),
+      } as unknown as Json,
       changes: input.changes,
     });
     if (error) databaseError(error);

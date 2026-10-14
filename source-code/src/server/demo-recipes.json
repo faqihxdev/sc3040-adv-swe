@@ -1,0 +1,194 @@
+[
+  {
+    "name": "Prawn and Bean Sprout Thick Rice Noodles",
+    "summary": "Thick rice noodles tossed with prawns, bean sprouts, and chye sim in light soy sauce.",
+    "servings": 2,
+    "cookingMinutes": 25,
+    "ingredients": [
+      {
+        "name": "Thick rice noodles",
+        "amount": 250,
+        "unit": "g",
+        "source": "inventory"
+      },
+      {
+        "name": "Prawns",
+        "amount": 150,
+        "unit": "g",
+        "source": "inventory"
+      },
+      {
+        "name": "Bean sprouts",
+        "amount": 100,
+        "unit": "g",
+        "source": "inventory"
+      },
+      {
+        "name": "Chye sim",
+        "amount": 100,
+        "unit": "g",
+        "source": "inventory"
+      },
+      {
+        "name": "Garlic",
+        "amount": 10,
+        "unit": "g",
+        "source": "inventory"
+      },
+      {
+        "name": "Light soy sauce",
+        "amount": 20,
+        "unit": "ml",
+        "source": "inventory"
+      },
+      {
+        "name": "Cooking oil",
+        "amount": 15,
+        "unit": "ml",
+        "source": "staple"
+      },
+      {
+        "name": "Water",
+        "amount": 1500,
+        "unit": "ml",
+        "source": "staple"
+      }
+    ],
+    "steps": [
+      "Bring the water to a boil and cook the thick rice noodles until tender; drain them.",
+      "Heat the oil in a large pan and cook the garlic briefly.",
+      "Add the prawns and cook until opaque.",
+      "Add the chye sim and bean sprouts; cook until just tender.",
+      "Toss in the thick rice noodles and light soy sauce, then stir until hot throughout."
+    ],
+    "image": "/demo-meals/prawn-noodles.webp"
+  },
+  {
+    "name": "Chicken Curry with Rice",
+    "summary": "Chicken breast and potatoes simmered with curry paste and coconut milk, served with rice.",
+    "servings": 2,
+    "cookingMinutes": 40,
+    "ingredients": [
+      {
+        "name": "Chicken breast",
+        "amount": 300,
+        "unit": "g",
+        "source": "inventory"
+      },
+      {
+        "name": "Rice",
+        "amount": 150,
+        "unit": "g",
+        "source": "inventory"
+      },
+      {
+        "name": "Curry paste",
+        "amount": 40,
+        "unit": "g",
+        "source": "inventory"
+      },
+      {
+        "name": "Coconut milk",
+        "amount": 200,
+        "unit": "ml",
+        "source": "inventory"
+      },
+      {
+        "name": "Potatoes",
+        "amount": 200,
+        "unit": "g",
+        "source": "inventory"
+      },
+      {
+        "name": "Onion",
+        "amount": 100,
+        "unit": "g",
+        "source": "inventory"
+      },
+      {
+        "name": "Cooking oil",
+        "amount": 10,
+        "unit": "ml",
+        "source": "staple"
+      },
+      {
+        "name": "Water",
+        "amount": 400,
+        "unit": "ml",
+        "source": "staple"
+      }
+    ],
+    "steps": [
+      "Rinse the rice, then cook it with 300 ml of the water until tender.",
+      "Heat the oil in a pot and cook the onion until softened.",
+      "Stir in the curry paste, then add the chicken breast and potatoes; coat them with the paste.",
+      "Add the coconut milk and remaining 100 ml of water. Simmer until the potatoes are tender and the chicken is cooked through.",
+      "Serve the chicken curry over the rice."
+    ],
+    "image": "/demo-meals/chicken-curry.webp"
+  },
+  {
+    "name": "Tuna, Tomato and Pea Pasta",
+    "summary": "Pasta with canned tuna, tomato passata, frozen peas, onion, and cheese.",
+    "servings": 2,
+    "cookingMinutes": 30,
+    "ingredients": [
+      {
+        "name": "Pasta",
+        "amount": 180,
+        "unit": "g",
+        "source": "inventory"
+      },
+      {
+        "name": "Canned tuna",
+        "amount": 150,
+        "unit": "g",
+        "source": "inventory"
+      },
+      {
+        "name": "Tomato passata",
+        "amount": 250,
+        "unit": "ml",
+        "source": "inventory"
+      },
+      {
+        "name": "Frozen peas",
+        "amount": 100,
+        "unit": "g",
+        "source": "inventory"
+      },
+      {
+        "name": "Onion",
+        "amount": 80,
+        "unit": "g",
+        "source": "inventory"
+      },
+      {
+        "name": "Cheese",
+        "amount": 40,
+        "unit": "g",
+        "source": "inventory"
+      },
+      {
+        "name": "Cooking oil",
+        "amount": 10,
+        "unit": "ml",
+        "source": "staple"
+      },
+      {
+        "name": "Water",
+        "amount": 1500,
+        "unit": "ml",
+        "source": "staple"
+      }
+    ],
+    "steps": [
+      "Bring the water to a boil and cook the pasta until tender; drain it.",
+      "Heat the oil in a pan and cook the onion until softened.",
+      "Add the tomato passata and frozen peas; simmer until the peas are tender.",
+      "Stir in the canned tuna and warm it through.",
+      "Toss the pasta with the sauce and top with the cheese."
+    ],
+    "image": "/demo-meals/tuna-pasta.webp"
+  }
+]

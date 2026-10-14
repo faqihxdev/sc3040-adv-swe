@@ -88,6 +88,7 @@ export type AppState = {
   exclusions: string[];
   aiEnabled: boolean;
   demoResetEnabled?: boolean;
+  demoMealsEnabled?: boolean;
   quantityEvents?: QuantityEvent[];
 };
 export type QuantityEvent = {
@@ -134,6 +135,8 @@ export type RankedMeal = Recipe & {
   trackedItems: Item[];
   ingredientNames: Record<string, string>;
   token: string;
+  source?: 'saved-demo';
+  savedImage?: string;
 };
 export const confirmationSchema = z.object({
   token: z.string().max(100000),

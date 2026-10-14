@@ -15,6 +15,8 @@ export async function POST(request: Request) {
     const state = await loadState();
     if (!state.household) throw new AppError('Join a household first.', 403);
     const ticket = verifyMeal(input.token, state.user.id, state.household.id);
+    if (ticket.source === 'saved-demo')
+      throw new AppError('Saved demo recipes use prepared illustrations.', 409);
     return NextResponse.json(await createMealImage(state, input.token, ticket, request.signal), {
       headers: { 'Cache-Control': 'private, no-store' },
     });

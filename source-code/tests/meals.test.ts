@@ -12,6 +12,13 @@ import { ingredient, recipe, request, today } from './rules-fixtures';
 import { demoIngredients } from '@/domain/demo-data';
 
 describe('FR01 / PR03: deterministic eligibility and scoring', () => {
+  test.each(['Seafood', 'Vegetarian', 'Vegan'])(
+    '%s excludes the demo fish ingredients',
+    (exclusion) => {
+      for (const name of ['Fishballs', 'Fishcake', 'Canned tuna'])
+        expect(matchesExclusion(name, [exclusion])).toBe(true);
+    },
+  );
   test.each([
     ['2026-09-30', 0],
     ['2026-10-01', 3],

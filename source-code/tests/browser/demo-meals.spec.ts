@@ -98,6 +98,40 @@ test('saved demo recovery continues through confirmation and Insights without AI
   await expect(
     page.getByRole('button', { name: 'Use saved demo recipes', exact: true }),
   ).toBeVisible();
+  const savedLink = page.getByRole('button', { name: 'Use saved demo recipes', exact: true });
+  const savedLabel = savedLink.getByText('Use saved', { exact: true });
+  await expect(savedLink).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+  await expect(savedLabel).toHaveCSS('opacity', '0');
+  await expect(savedLink.locator('svg')).toBeVisible();
+  if (!testInfo.project.use.isMobile) {
+    await savedLink.hover();
+    await page.clock.runFor(200);
+    await expect(savedLabel).toHaveCSS('opacity', '1');
+    await page.mouse.move(0, 0);
+    await page.clock.runFor(200);
+    await expect(savedLabel).toHaveCSS('opacity', '0');
+  }
+  await savedLink.focus();
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Shift+Tab');
+  await expect(savedLink).toBeFocused();
+  await expect(savedLink).toHaveCSS('outline-style', 'solid');
+  await page.clock.runFor(200);
+  await expect(savedLabel).toHaveCSS('opacity', '1');
+  const linkBounds = await savedLink.boundingBox();
+  const viewBounds = await page.locator('.view-panel:not([hidden])').boundingBox();
+  expect(linkBounds!.height).toBeGreaterThanOrEqual(44);
+  expect(
+    Math.abs(linkBounds!.x + linkBounds!.width - viewBounds!.x - viewBounds!.width),
+  ).toBeLessThan(1);
+  expect(
+    Math.abs(linkBounds!.y + linkBounds!.height - viewBounds!.y - viewBounds!.height),
+  ).toBeLessThan(1);
+  const mobileNav = page.locator('[data-mobile-nav]');
+  if (await mobileNav.isVisible()) {
+    expect(linkBounds!.y + linkBounds!.height).toBeLessThan((await mobileNav.boundingBox())!.y);
+  }
+  await page.screenshot({ path: testInfo.outputPath('saved-demo-link.png'), fullPage: true });
   await page.getByRole('button', { name: 'Find meals', exact: true }).click();
   await page.getByRole('button', { name: 'Next', exact: true }).click();
   await expect(page.getByRole('alert').filter({ hasText: 'Meal generation failed' })).toBeVisible();

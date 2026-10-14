@@ -3,7 +3,12 @@
 import { useMemo, useRef, useState } from 'react';
 import { Check, ChevronDown, RefreshCw } from 'lucide-react';
 import type { AppState, Change, Item, RankedMeal } from '@/domain/model';
-import { discardReasons, formatQuantity, remainingQuantity } from '@/domain/quantities';
+import {
+  discardReasons,
+  discardReasonLabels,
+  formatQuantity,
+  remainingQuantity,
+} from '@/domain/quantities';
 import { validateChanges } from '@/domain/meals';
 import { api, ApiError, message } from '@/lib/api';
 import { Button } from './ui/button';
@@ -34,10 +39,6 @@ function initialChanges(meal: RankedMeal, items: Item[]): DraftChange[] {
     discardedAmount: 0,
     discardReason: null,
   }));
-}
-
-function reasonLabel(reason: string) {
-  return reason.replace('_', ' ');
 }
 
 export function MealConfirmation({ meal, state, refresh, close, complete }: MealConfirmationProps) {
@@ -326,7 +327,7 @@ export function MealConfirmation({ meal, state, refresh, close, complete }: Meal
                             { value: '', label: 'Choose a reason' },
                             ...discardReasons.map((reason) => ({
                               value: reason,
-                              label: reasonLabel(reason),
+                              label: discardReasonLabels[reason],
                             })),
                           ]}
                         />

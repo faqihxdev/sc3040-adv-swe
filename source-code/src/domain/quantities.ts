@@ -17,6 +17,12 @@ export const positiveQuantitySchema = quantitySchema.gt(0);
 export const discardReasons = ['spoiled', 'past_date', 'prep', 'other'] as const;
 export const discardReasonSchema = z.enum(discardReasons);
 export type DiscardReason = (typeof discardReasons)[number];
+export const discardReasonLabels: Record<DiscardReason, string> = {
+  spoiled: 'Spoiled',
+  past_date: 'Past date',
+  prep: 'Preparation scraps',
+  other: 'Other',
+};
 
 export function sameUnit(left: Unit | null | undefined, right: Unit | null | undefined) {
   return left !== null && left !== undefined && left === right;

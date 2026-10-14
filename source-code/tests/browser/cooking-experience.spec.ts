@@ -24,7 +24,9 @@ test('AI suggestions: images start together, retry once independently and keep m
         'Rice noodles in a fragrant coconut broth.',
         'Ginger rice with tender chicken and a light broth on the side.',
       ][index],
-      score: [72.4, 48, 26][index],
+      score: (100 * [21, 14, 8][index]) / 29,
+      points: [21, 14, 8][index],
+      totalPoints: 29,
       trackedItems: [{ ...rice, expiry_date: index === 0 ? todaySingapore() : rice.expiry_date }],
     }),
   );
@@ -85,6 +87,20 @@ test('AI suggestions: images start together, retry once independently and keep m
   await expect(page.getByRole('img', { name: /^AI illustration/ })).toHaveCount(3);
   const cards = page.getByRole('article');
   await expect(cards.first()).toContainText('Expiry coverage 72%');
+  const scoreTrigger = cards
+    .first()
+    .getByRole('button', { name: `Why ${meals[0].name}?`, exact: true });
+  await scoreTrigger.focus();
+  await page.keyboard.press('Enter');
+  const scoreHelp = page.getByRole('dialog', { name: `Why ${meals[0].name}?`, exact: true });
+  await expect(scoreHelp).toContainText('21 ÷ 29 × 100 ≈ 72%');
+  await expect(scoreHelp).toContainText('using stock at generation');
+  await expect(scoreHelp).toContainText(
+    'Within 3 days: 3 points. Within 4 to 7 days: 2. Later: 1.',
+  );
+  await page.screenshot({ path: testInfo.outputPath('expiry-score.png'), animations: 'disabled' });
+  await scoreHelp.getByRole('button', { name: 'Close help', exact: true }).click();
+  await expect(scoreHelp).toBeHidden();
   const badge = await page.getByText('Use first', { exact: true }).boundingBox();
   const picture = await cards.first().locator('[data-meal-image]').boundingBox();
   expect(badge!.y).toBeGreaterThan(picture!.y);

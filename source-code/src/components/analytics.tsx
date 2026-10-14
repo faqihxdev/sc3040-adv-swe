@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, CheckCheck, FileText } from 'lucide-react';
+import { ChevronDown, ChevronRight, CheckCheck, FileText } from 'lucide-react';
 import type { AppState } from '@/domain/model';
 import { formatQuantity } from '@/domain/quantities';
 import { summarize, type WasteIngredientRow } from '@/domain/analytics';
@@ -72,7 +72,9 @@ type Action = {
 export function Analytics({ state, onCook, onInventory }: Props) {
   const [period, setPeriod] = useState(28);
   const [showAll, setShowAll] = useState(false);
-  const [records, setRecords] = useState(false);
+  const [records, setRecords] = useState<{
+    ingredient?: Pick<WasteIngredientRow, 'name' | 'unit'>;
+  } | null>(null);
   const [expiryRange, setExpiryRange] = useState<ExpiryBand['id'] | null>(null);
   const end = todaySingapore();
   const start = new Date(Date.parse(end) - (period - 1) * 86400000).toISOString().slice(0, 10);
@@ -338,13 +340,13 @@ export function Analytics({ state, onCook, onInventory }: Props) {
             </InfoHelp>
           </div>
           <div data-chart-area className="mt-3 h-64 lg:mt-0">
-            <WasteLeaders rows={leaders} />
+            <WasteLeaders rows={leaders} onSelect={(ingredient) => setRecords({ ingredient })} />
           </div>
         </section>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="helper">{data.synthetic ? 'Includes sample records.' : ''}</p>
-        <Button variant="outline" onClick={() => setRecords(true)}>
+        <Button variant="outline" onClick={() => setRecords({})}>
           <FileText size={16} />
           View amount records
         </Button>
@@ -354,7 +356,8 @@ export function Analytics({ state, onCook, onInventory }: Props) {
           events={state.quantityEvents ?? []}
           start={start}
           end={end}
-          onClose={() => setRecords(false)}
+          ingredient={records.ingredient}
+          onClose={() => setRecords(null)}
         />
       )}
     </div>
@@ -526,25 +529,45 @@ function expiryLabel(action: Action) {
   return `Expiry in ${action.days} days`;
 }
 
-function WasteLeaders({ rows }: { rows: WasteIngredientRow[] }) {
+function WasteLeaders({
+  rows,
+  onSelect,
+}: {
+  rows: WasteIngredientRow[];
+  onSelect: (row: WasteIngredientRow) => void;
+}) {
   return rows.length ? (
     <ol className="flex h-full flex-col justify-around gap-2">
       {rows.map((row) => (
         <li key={row.key}>
-          <div className="flex items-baseline justify-between gap-3">
-            <p className="text-sm font-bold">{row.name}</p>
-            <p className="text-sm font-bold tabular-nums">{Math.round(row.wasteRate * 100)}%</p>
-          </div>
-          <p className="helper mt-1 leading-4">
-            {formatQuantity(row.discarded, row.unit)} discarded in {row.discardEvents}{' '}
-            {row.discardEvents === 1 ? 'incident' : 'incidents'}
-          </p>
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted" aria-hidden="true">
-            <div
-              className="h-full rounded-full bg-[var(--chart-1)]"
-              style={{ width: `${row.wasteRate * 100}%` }}
-            />
-          </div>
+          <button
+            type="button"
+            aria-label={`View ${row.name} records in ${row.unit}`}
+            aria-haspopup="dialog"
+            onClick={() => onSelect(row)}
+            className="-mx-2 block min-h-11 w-[calc(100%+1rem)] cursor-pointer rounded-lg px-2 text-left transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          >
+            <span className="flex items-center justify-between gap-3 text-sm font-bold">
+              <span>{row.name}</span>
+              <span className="flex shrink-0 items-center gap-2 tabular-nums">
+                {Math.round(row.wasteRate * 100)}%
+                <ChevronRight size={14} aria-hidden="true" className="text-muted-foreground" />
+              </span>
+            </span>
+            <span className="helper mt-1 block leading-4">
+              {formatQuantity(row.discarded, row.unit)} discarded in {row.discardEvents}{' '}
+              {row.discardEvents === 1 ? 'incident' : 'incidents'}
+            </span>
+            <span
+              className="mt-2 block h-2 overflow-hidden rounded-full bg-muted"
+              aria-hidden="true"
+            >
+              <span
+                className="block h-full rounded-full bg-[var(--chart-1)]"
+                style={{ width: `${row.wasteRate * 100}%` }}
+              />
+            </span>
+          </button>
         </li>
       ))}
     </ol>

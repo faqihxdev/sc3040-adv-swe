@@ -122,7 +122,7 @@ test.describe('combined cooking confirmation', () => {
     const confirmation = page.getByRole('dialog', { name: 'Record meal', exact: true });
     await confirmation.getByRole('button', { name: 'Waste details for Rice', exact: true }).click();
     await confirmation.getByLabel('Waste amount for Rice (optional)', { exact: true }).fill('25');
-    await selectOption(page, 'Waste reason for Rice', 'prep');
+    await selectOption(page, 'Waste reason for Rice', 'Preparation scraps');
     await expect(
       confirmation.getByLabel('Waste amount for Tomatoes (optional)', { exact: true }),
     ).toHaveCount(0);

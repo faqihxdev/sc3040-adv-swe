@@ -52,11 +52,15 @@ Use these local services:
 
 Ports stay localhost-only. Local data survives stopping and restarting the services.
 
-Local accounts share the local-only password `UseEatNow!2026`:
+Fresh local accounts use `UseEatNow!2026` unless private overrides are supplied:
 
 - `alex@useeatnow.test`: shared household owner.
 - `sam@useeatnow.test`: shared household member.
 - `jo@useeatnow.test`: separate household.
+
+For team credentials, set `DEMO_ALEX_PASSWORD`, `DEMO_SAM_PASSWORD` and
+`DEMO_JO_PASSWORD` in `.env.local` before seeding. To update existing local accounts,
+run `node scripts/demo-passwords.mjs`. This preserves inventory and history.
 
 ### Daily startup and shutdown
 
@@ -88,7 +92,7 @@ and unit before including those items in meal requests.
 | `.env.local`              | Local Supabase keys, signing secret and runtime flags; generated. |
 | `../.env`                 | Optional server-only `OPENAI_API_KEY` fallback.                   |
 | `.env.hosted`             | Hosted Supabase/admin configuration; deployment operator only.    |
-| `.demo-credentials.local` | Hosted demo passwords; share privately.                           |
+| `.demo-credentials.local` | Private demo logins; share with the team.                         |
 
 Real credentials are ignored. Only the Supabase URL and anon key may use
 `NEXT_PUBLIC_`; RLS controls database access. Keep AI/admin/signing keys server-side.

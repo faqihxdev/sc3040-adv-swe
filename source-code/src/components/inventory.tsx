@@ -5,7 +5,7 @@ import { SlidingSelection } from './sliding-selection';
 import { AddMethodTabs } from './add-method-tabs';
 import type { PhotoImportView } from './photo-import';
 import { SelectField } from './ui/select-field';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { DropdownMenu } from 'radix-ui';
 import {
   Plus,
@@ -24,7 +24,18 @@ import {
 import { toast } from 'sonner';
 import type { AppState, Item } from '@/domain/model';
 import { itemInput } from '@/domain/model';
-import { formatQuantity, positiveQuantitySchema, type Unit } from '@/domain/quantities';
+import type {
+  InventoryField,
+  InventoryHighlight,
+  InventoryHighlights,
+} from '@/domain/shared-updates';
+import {
+  discardReasons,
+  discardReasonLabels,
+  formatQuantity,
+  positiveQuantitySchema,
+  type Unit,
+} from '@/domain/quantities';
 import { daysUntil, todaySingapore } from '@/domain/meals';
 import { message } from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -32,6 +43,7 @@ import { Button } from './ui/button';
 import { Modal, Busy, ErrorText, Empty } from './common';
 import type { Mutate } from './workspace';
 import { QuantityField } from './quantity-field';
+import updateStyles from './inventory-update.module.css';
 const PhotoImport = dynamic(() => import('./photo-import').then((module) => module.PhotoImport), {
   loading: () => (
     <span role="status" className="sr-only">
@@ -49,11 +61,13 @@ type QuantityDraft = {
 };
 export function Inventory({
   state,
+  highlights = {},
   mutate,
   focusedItemId,
   onFocusHandled,
 }: {
   state: AppState;
+  highlights?: InventoryHighlights;
   mutate: Mutate;
   focusedItemId?: string | null;
   onFocusHandled?: () => void;
@@ -327,6 +341,7 @@ export function Inventory({
               <IngredientRow
                 key={item.id}
                 item={item}
+                highlight={highlights[item.id]}
                 today={today}
                 onEdit={() => openEditor(item)}
                 onRemove={() => {
@@ -463,17 +478,33 @@ export function Inventory({
 }
 function IngredientRow({
   item,
+  highlight,
   today,
   onEdit,
   onRemove,
   onAdjust,
 }: {
   item: Item;
+  highlight?: InventoryHighlight;
   today: string;
   onEdit: () => void;
   onRemove: () => void;
   onAdjust: (kind: 'restock' | 'discarded') => void;
 }) {
+  const fields = highlight?.version === item.version ? highlight.fields : [];
+  function value(field: InventoryField, content: ReactNode) {
+    const changed = fields.includes(field);
+    return (
+      <span
+        key={`${field}:${changed ? item.version : 'idle'}`}
+        data-inventory-field={field}
+        data-updated-field={changed ? field : undefined}
+        className={changed ? updateStyles.highlight : undefined}
+      >
+        {content}
+      </span>
+    );
+  }
   const days = daysUntil(item.expiry_date, today);
   const confirmed = item.quantity !== null && item.unit !== null;
   const flag =
@@ -502,24 +533,37 @@ function IngredientRow({
     ...(item.expiry_date.slice(0, 4) !== today.slice(0, 4) ? { year: 'numeric' as const } : {}),
   }).format(new Date(item.expiry_date));
   return (
-    <article className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-2 border-b border-border px-3 py-3 last:border-b-0 md:grid-cols-[minmax(0,1fr)_7rem_8rem_auto] md:gap-4 md:px-4">
+    <article
+      data-inventory-item={item.id}
+      data-updated={fields.length > 0 || undefined}
+      className="relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 gap-y-2 border-b border-border px-3 py-3 first:rounded-t-lg last:rounded-b-lg last:border-b-0 md:grid-cols-[minmax(0,1fr)_7rem_8rem_auto] md:gap-4 md:px-4"
+    >
       <div className="min-w-0">
-        <h3 className="text-sm font-bold leading-snug">{item.name}</h3>
+        <h3 className="text-sm font-bold leading-snug">{value('name', item.name)}</h3>
         <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-          {[item.category, item.location].filter(Boolean).join(' / ') || 'Uncategorised'}
+          {item.category && value('category', item.category)}
+          {item.category && item.location && ' / '}
+          {item.location && value('location', item.location)}
+          {!item.category &&
+            !item.location &&
+            value(fields.includes('location') ? 'location' : 'category', 'Uncategorised')}
           <span className="md:hidden">
-            {' '}
-            · {confirmed ? formatQuantity(item.quantity ?? null, item.unit ?? null) : 'Set amount'}
+            {' · '}
+            <span className="font-semibold tabular-nums">
+              {value('amount', confirmed ? formatQuantity(item.quantity, item.unit) : 'Set amount')}
+            </span>
           </span>
         </p>
       </div>
       <div className="hidden space-y-1.5 md:block">
         {confirmed ? (
           <p className="text-sm font-semibold tabular-nums">
-            {formatQuantity(item.quantity ?? null, item.unit ?? null)}
+            {value('amount', formatQuantity(item.quantity, item.unit))}
           </p>
         ) : (
-          <p className="text-sm font-semibold text-accent-foreground">Set amount</p>
+          <p className="text-sm font-semibold text-accent-foreground">
+            {value('amount', 'Set amount')}
+          </p>
         )}
         <p className="text-xs text-muted-foreground">
           {confirmed ? 'Available' : 'Required before cooking'}
@@ -532,7 +576,7 @@ function IngredientRow({
           className="text-xs text-muted-foreground"
           aria-label={'Expiry date ' + item.expiry_date}
         >
-          {date}
+          {value('expiry', date)}
         </time>
       </div>
       <div className="col-start-2 row-span-2 row-start-1 flex gap-1 md:col-start-4 md:row-span-1">
@@ -669,10 +713,7 @@ function AdjustDialog({
             onValueChange={setReason}
             options={[
               { value: '', label: 'Choose a reason' },
-              { value: 'spoiled', label: 'Spoiled' },
-              { value: 'past_date', label: 'Past date' },
-              { value: 'prep', label: 'Prep' },
-              { value: 'other', label: 'Other' },
+              ...discardReasons.map((value) => ({ value, label: discardReasonLabels[value] })),
             ]}
           />
         </label>

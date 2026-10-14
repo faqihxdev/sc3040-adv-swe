@@ -51,7 +51,8 @@ Executable cases contain their inputs, steps and assertions in `source-code/test
 | `meal-token.test.ts`, `recommendations.test.ts`         | Forged/expired/wrong-user tickets, bad AI IDs/schema, unavailable provider/quota → rejection, bounded retry and no unauthorised writes.                            |
 | `photo*.test.ts`, `state.test.ts`, `demo-reset.test.ts` | Invalid uploads, unavailable AI, paging limits and reset scope → validation, bounded data and permission checks.                                                   |
 | `core-database.sql`                                     | CRUD/undo, foreign household, stale/duplicate confirmation, transfer/leave/delete → isolated, atomic, version-checked and idempotent operations.                   |
-| `photo-batch.sql`, `demo-reset.sql`                     | Invalid/duplicate/stale batches and non-owner reset → rollback, one save and retained accounts/quota.                                                              |
+| `photo-batch.sql`, `demo-reset.sql`                     | Invalid/stale writes → rollback. Demo reset clears members' exclusions, preserves accounts/quota and isolates other households.                                    |
+| `shared-updates.test.ts`, `browser/shared-updates.spec.ts` | Two-member updates → row highlight, quantity notice, reduced-motion support and quiet unchanged refreshes. Remote reset clears the open dietary editor.          |
 | `browser/*.spec.ts`                                     | UC1–UC6, manual/photo drafts, previews, cancellation, failure/retry, analytics, exclusions, access and account deletion → asserted UI plus real local saved state. |
 
 ### Quantity and image regressions

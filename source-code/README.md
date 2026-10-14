@@ -107,9 +107,10 @@ Models live in `src/server/recommendations.ts`, `photo-recognition.ts` and
 Dish illustrations use low quality, load concurrently and retry temporary failure
 once per image. The private cache expires after 24 hours and has row/byte limits.
 
-`AI_REQUEST_LIMIT` caps request counts. Track recipes, recognition, images, retries
-and evaluation against the S$10 project ceiling. Pause paid calls before exceeding
-it; budget increases require team approval.
+Recipe and photo requests share a 10-second cooldown per user. Dish images run
+concurrently. Usage history tracks requests and tokens; generation has no lifetime
+request cap. Track all AI costs against the S$10 project ceiling and pause paid
+calls before exceeding it; budget increases require team approval.
 
 ## Where code lives
 

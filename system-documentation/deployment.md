@@ -111,6 +111,7 @@ Reapply hosted auth config and update Vercel `APP_ORIGIN` before redeploying.
 - Registration is disabled; passwords are in ignored `.demo-credentials.local`.
 - Account → Reset to seed restores sample inventory/history with rolling dates and clears every member's dietary exclusions.
 - Only the allowlisted owner can reset. Accounts, passwords, membership and AI usage are kept.
+- Generation has no lifetime request cap. Recipe/photo requests share a 10-second per-user cooldown; image generation uses independent claims.
 - Track all AI costs, including dish images and retries, against the S$10 project ceiling. Pause paid calls before exceeding it.
 - Image-cache rows expire after 24 hours; the cache is private and capped at 100 rows and 64 MB.
 - Keep database backups; inactive Free projects can pause.

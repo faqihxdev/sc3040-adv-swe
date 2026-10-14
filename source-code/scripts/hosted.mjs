@@ -87,7 +87,7 @@ if (command === 'create') {
   config.AUTH_CALLBACK_URL = `${config.APP_ORIGIN}/auth/callback`;
   config.AUTH_RECOVERY_URL = `${config.APP_ORIGIN}/auth/callback?next=/reset-password`;
   config.AI_ENABLED = 'true';
-  config.AI_REQUEST_LIMIT = '100';
+  delete config.AI_REQUEST_LIMIT;
   config.DEMO_MODE = 'true';
   save();
   console.log(

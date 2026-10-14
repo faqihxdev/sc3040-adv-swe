@@ -40,12 +40,14 @@ beforeEach(() => {
 });
 describe('recognition adapter', () => {
   it('uses image input, bounded output, low reasoning, no tools and no stored request', async () => {
+    vi.stubEnv('AI_REQUEST_LIMIT', '0');
     const result = await recogniseIngredients(
       'actor',
       new Uint8Array([1]),
       new AbortController().signal,
     );
     expect(result.items[0].name).toBe('Onion');
+    expect(mocks.rpc).toHaveBeenCalledWith('reserve_ai', { actor: 'actor' });
     const input = mocks.generate.mock.calls[0][0];
     expect(input).toMatchObject({
       model: 'gpt-6-luna',
@@ -70,7 +72,7 @@ describe('recognition adapter', () => {
     expect(mocks.generate).toHaveBeenCalledTimes(1);
     expect(mocks.rpc.mock.calls.map((call) => call[0])).toEqual(['reserve_ai']);
   });
-  it('respects the AI switch and persistent budget before calling the model', async () => {
+  it('respects the AI switch and per-user cooldown before calling the model', async () => {
     vi.stubEnv('AI_ENABLED', 'false');
     await expect(
       recogniseIngredients('actor', new Uint8Array([1]), new AbortController().signal),
@@ -79,7 +81,7 @@ describe('recognition adapter', () => {
     vi.stubEnv('AI_ENABLED', 'true');
     mocks.rpc.mockResolvedValue({
       data: null,
-      error: { code: 'PT429', message: 'Call limit reached.' },
+      error: { code: 'PT429', message: 'Wait a few seconds before requesting again.' },
     });
     await expect(
       recogniseIngredients('actor', new Uint8Array([1]), new AbortController().signal),

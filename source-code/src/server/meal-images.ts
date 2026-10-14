@@ -100,7 +100,6 @@ export async function createMealImage(
     cancellation?.throwIfAborted();
     const reservation = await db.rpc('reserve_meal_image', {
       actor: state.user.id,
-      request_limit: Number(process.env.AI_REQUEST_LIMIT ?? 100),
       cache_key: cacheKey,
     });
     if (reservation.error) databaseError(reservation.error);

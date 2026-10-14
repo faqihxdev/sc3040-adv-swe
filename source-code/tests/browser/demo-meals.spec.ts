@@ -111,9 +111,8 @@ test('saved demo recovery continues through confirmation and Insights without AI
     await page.clock.runFor(200);
     await expect(savedLabel).toHaveCSS('opacity', '0');
   }
-  await savedLink.focus();
+  await page.getByRole('button', { name: 'Find meals', exact: true }).focus();
   await page.keyboard.press('Tab');
-  await page.keyboard.press('Shift+Tab');
   await expect(savedLink).toBeFocused();
   await expect(savedLink).toHaveCSS('outline-style', 'solid');
   await page.clock.runFor(200);

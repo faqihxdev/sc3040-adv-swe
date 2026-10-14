@@ -47,9 +47,14 @@ function MealContext({ meal }: { meal: RankedMeal }) {
           </span>
         </p>
         <InfoHelp label={`Why ${meal.name}?`}>
+          <p className="font-bold tabular-nums">
+            {meal.points} ÷ {meal.totalPoints} × 100 ≈ {Math.round(meal.score)}%
+          </p>
+          <p>Recipe points ÷ eligible pantry points, using stock at generation.</p>
           <p>
-            Covers {meal.coverage} eligible inventory ingredient{meal.coverage === 1 ? '' : 's'}.
-            The score weights ingredients by how soon they expire, regardless of amount used.
+            Within 3 days: 3 points. Within 4 to 7 days: 2. Later: 1. Covers {meal.coverage}{' '}
+            ingredient{meal.coverage === 1 ? '' : 's'}, regardless of amount used. Staples are
+            excluded.
           </p>
           <p>Ties favour more ingredients, then shorter cooking time.</p>
           <p>

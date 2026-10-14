@@ -421,6 +421,37 @@ test('quantity insights: action queue, matched charts and amount records', async
   await expect(wasteHotspots.getByText('Bean sprouts', { exact: true })).toBeVisible();
   await expect(whyDiscarded).toContainText(/18\s*incidents/);
 
+  const hotspot = wasteHotspots.getByRole('button', {
+    name: 'View Bean sprouts records in g',
+    exact: true,
+  });
+  await hotspot.focus();
+  await page.keyboard.press('Enter');
+  const ingredientRecords = page.getByRole('dialog', { name: 'Bean sprouts records', exact: true });
+  await expect(ingredientRecords).toBeVisible();
+  await expect(ingredientRecords.getByLabel('Record type', { exact: true })).toHaveText(
+    'Used and waste',
+  );
+  await expect(ingredientRecords.getByLabel('Record unit', { exact: true })).toHaveCount(0);
+  const ingredientRows = ingredientRecords.locator('tbody tr');
+  expect(await ingredientRows.count()).toBeGreaterThan(3);
+  for (const row of await ingredientRows.all()) {
+    await expect(row.locator('td').nth(1)).toHaveText('Bean sprouts');
+    await expect(row.locator('td').nth(2)).toHaveText(/ g$/);
+  }
+  await expect(ingredientRecords).toContainText('Cooked');
+  await expect(ingredientRecords).toContainText('Spoiled');
+  await page.screenshot({
+    path: testInfo.outputPath('ingredient-records.png'),
+    animations: 'disabled',
+  });
+  await selectOption(page, 'Record type', 'Waste');
+  await expect(ingredientRows).toHaveCount(3);
+  await expect(ingredientRecords).not.toContainText('Cooked');
+  await page.keyboard.press('Escape');
+  await expect(ingredientRecords).toBeHidden();
+  await expect(hotspot).toBeFocused();
+
   const recordsTrigger = page.getByRole('button', { name: 'View amount records', exact: true });
   await recordsTrigger.click();
   const records = page.getByRole('dialog', { name: 'Amount records', exact: true });

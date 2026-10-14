@@ -3,12 +3,16 @@ do $$
 declare uid uuid; teammate uuid; hid uuid; other_hid uuid; version_before int;
  items_data jsonb; outcomes_data jsonb; events_data jsonb := '[]'; old_ids uuid[]; failed boolean;
  budget_before int; profiles_before int; members_before int; other_before int; outcome_before int;
- bad_seed jsonb;
+ bad_seed jsonb; other_preferences jsonb;
 begin
  select id into uid from auth.users where email='alex@useeatnow.test';
  select id into teammate from auth.users where email='sam@useeatnow.test';
  if uid is null or teammate is null then raise exception 'Run db:seed before this test.'; end if;
  select household_id into hid from public.memberships where user_id=uid;
+ update public.profiles set exclusions=array['Mushrooms'] where id=uid;
+ update public.profiles set exclusions=array['Peanuts'] where id=teammate;
+ select jsonb_agg(to_jsonb(p) order by p.id) into other_preferences from public.profiles p
+   where p.id not in (select user_id from public.memberships where household_id=hid);
  select version into version_before from public.households where id=hid;
  select count(*) into budget_before from private.ai_calls;
  select count(*) into profiles_before from public.profiles;
@@ -55,8 +59,16 @@ begin
  failed:=false;
  begin perform public.reset_demo(uid,hid,version_before,jsonb_set(items_data,'{0,quantity}','"NaN"'),outcomes_data,events_data); exception when others then failed:=true; end;
  assert failed, 'Invalid seed accepted';
+ failed:=false;
+ begin perform public.reset_demo(uid,hid,version_before,items_data,outcomes_data,
+   jsonb_set(events_data,'{0,discard_reason}','"invalid"'));
+   exception when check_violation then failed:=true;
+ end;
+ assert failed, 'Invalid ledger insert accepted';
  assert (select array_agg(id order by id) from public.inventory where household_id=hid)=(select array_agg(x order by x) from unnest(old_ids) x), 'Failed reset removed inventory';
  assert (select count(*) from public.outcomes where household_id=hid)=outcome_before, 'Failed reset removed history';
+ assert (select exclusions from public.profiles where id=uid)=array['Mushrooms'], 'Failed reset cleared owner preferences';
+ assert (select exclusions from public.profiles where id=teammate)=array['Peanuts'], 'Failed reset cleared member preferences';
  perform public.reset_demo(uid,hid,version_before,items_data,outcomes_data,events_data);
  assert (select count(*) from public.inventory where household_id=hid and not deleted)=40, 'Seed inventory count differs';
  assert not exists(
@@ -83,10 +95,16 @@ begin
  assert (select count(*) from private.ai_calls)=budget_before, 'AI usage allowance was reset';
  assert (select count(*) from public.profiles)=profiles_before, 'Accounts changed';
  assert (select count(*) from public.memberships)=members_before, 'Membership changed';
+ assert not exists(select 1 from public.profiles where id in
+   (select user_id from public.memberships where household_id=hid) and cardinality(exclusions)<>0),
+   'Demo household dietary exclusions survived';
+ assert (select jsonb_agg(to_jsonb(p) order by p.id) from public.profiles p
+   where p.id not in (select user_id from public.memberships where household_id=hid))
+   is not distinct from other_preferences, 'Another household preferences changed';
  assert (select count(*) from public.inventory where household_id<>hid)=other_before, 'Another household changed';
  failed:=false;
  begin perform public.reset_demo(uid,hid,version_before,items_data,outcomes_data,events_data); exception when sqlstate 'PT409' then failed:=true; end;
  assert failed, 'Duplicate reset was accepted';
- raise notice 'PASS: canonical 40-item/14-outcome reset, permissions, owner/scope/version checks, rollback, fresh linked IDs, preserved accounts/members/AI quota';
+ raise notice 'PASS: canonical 40-item/14-outcome reset, dietary exclusions cleared for all members, owner/scope/version checks, rollback, preserved accounts/members/AI quota';
 end $$;
 rollback;

@@ -80,11 +80,13 @@ test('UC2 photo / FR-04: recognition is a draft; amount/date and final confirmat
   await page.getByRole('button', { name: 'Review 1 ingredient', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Check the highlighted fields');
   await page.getByLabel('Amount', { exact: true }).fill('500');
-  await selectOption(page, 'Amount unit', 'g');
   await page.getByLabel(/^Expiry date/).fill('2099-12-31');
+  await selectOption(page, 'Amount unit', 'g');
+  await expect(page.getByLabel('Expiry date', { exact: true })).toHaveValue('2099-12-31');
   await page.getByRole('tab', { name: 'Manual', exact: true }).click();
   await page.getByRole('tab', { name: 'Photo', exact: true }).click();
   await expect(page.getByLabel('Ingredient 1', { exact: true })).toHaveValue('Tomato');
+  await expect(page.getByLabel('Expiry date', { exact: true })).toHaveValue('2099-12-31');
   await page.getByRole('button', { name: 'Review 1 ingredient', exact: true }).click();
   expect((await state(page)).items).toHaveLength(0);
   await page.getByRole('button', { name: 'Confirm 1 ingredient', exact: true }).click();
@@ -147,7 +149,7 @@ test('UC1/UC3/UC4: recommend, cook, confirm, retry and inspect recorded analytic
   await page.getByLabel('Used amount for Rice', { exact: true }).fill('100');
   await page.getByRole('button', { name: 'Waste details for Rice', exact: true }).click();
   await page.getByLabel('Waste amount for Rice (optional)', { exact: true }).fill('50');
-  await selectOption(page, 'Waste reason for Rice', 'prep');
+  await selectOption(page, 'Waste reason for Rice', 'Preparation scraps');
   expect((await state(page)).outcomes).toHaveLength(0);
   const confirmation = page.waitForRequest('**/api/confirm');
   await page.getByRole('button', { name: 'Confirm meal', exact: true }).click();

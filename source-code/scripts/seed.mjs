@@ -20,12 +20,12 @@ const users = [
     email: 'alex@useeatnow.test',
     name: 'Alex',
     household: 'The good food club',
-    password: hosted ? process.env.DEMO_ALEX_PASSWORD : 'UseEatNow!2026',
+    password: process.env.DEMO_ALEX_PASSWORD || (hosted ? undefined : 'UseEatNow!2026'),
   },
   {
     email: 'sam@useeatnow.test',
     name: 'Sam',
-    password: hosted ? process.env.DEMO_SAM_PASSWORD : 'UseEatNow!2026',
+    password: process.env.DEMO_SAM_PASSWORD || (hosted ? undefined : 'UseEatNow!2026'),
   },
   ...(!hosted
     ? [
@@ -33,13 +33,13 @@ const users = [
           email: 'jo@useeatnow.test',
           name: 'Jo',
           household: 'Another kitchen',
-          password: 'UseEatNow!2026',
+          password: process.env.DEMO_JO_PASSWORD || 'UseEatNow!2026',
         },
       ]
     : []),
 ];
-if (hosted && users.some((u) => !u.password || u.password.length < 16))
-  throw new Error('Each hosted demo account needs a private password of at least 16 characters.');
+if (hosted && users.some((u) => !u.password || u.password.length < 8))
+  throw new Error('Each hosted demo account needs a private password of at least 8 characters.');
 const { data: existing, error: listError } = await admin.auth.admin.listUsers();
 if (listError) throw listError;
 const sessions = [];

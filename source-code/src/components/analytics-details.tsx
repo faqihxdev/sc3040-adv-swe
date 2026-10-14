@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import type { QuantityEvent } from '@/domain/model';
-import { formatQuantity, units, unitLabels } from '@/domain/quantities';
-import { todaySingapore } from '@/domain/meals';
+import { formatQuantity, units, unitLabels, type Unit } from '@/domain/quantities';
+import { normalize, todaySingapore } from '@/domain/meals';
 import { Modal } from './common';
 import { SelectField } from './ui/select-field';
 import { Button } from './ui/button';
@@ -20,15 +20,17 @@ export function AmountRecords({
   events,
   start,
   end,
+  ingredient,
   onClose,
 }: {
   events: QuantityEvent[];
   start: string;
   end: string;
+  ingredient?: { name: string; unit: Unit };
   onClose: () => void;
 }) {
   const [unit, setUnit] = useState('all');
-  const [kind, setKind] = useState('discarded');
+  const [kind, setKind] = useState(ingredient ? 'both' : 'discarded');
   const rows = events
     .filter((event) => {
       const date = todaySingapore(new Date(event.created_at));
@@ -38,6 +40,9 @@ export function AmountRecords({
         date >= start &&
         date <= end &&
         (event.kind === 'used' || event.kind === 'discarded') &&
+        (!ingredient ||
+          (normalize(event.name) === normalize(ingredient.name) &&
+            event.unit === ingredient.unit)) &&
         (kind === 'both' || event.kind === kind) &&
         (unit === 'all' || event.unit === unit)
       );
@@ -45,8 +50,12 @@ export function AmountRecords({
     .sort((a, b) => b.created_at.localeCompare(a.created_at) || a.name.localeCompare(b.name));
   return (
     <Modal
-      title="Amount records"
-      description="Recorded use and waste for the selected reporting period."
+      title={ingredient ? `${ingredient.name} records` : 'Amount records'}
+      description={
+        ingredient
+          ? `Recorded use and waste in ${unitLabels[ingredient.unit]} for the selected reporting period.`
+          : 'Recorded use and waste for the selected reporting period.'
+      }
       onClose={onClose}
       wide
       footer={
@@ -55,7 +64,7 @@ export function AmountRecords({
         </Button>
       }
     >
-      <div className="grid grid-cols-2 gap-3">
+      <div className={`grid gap-3 ${ingredient ? '' : 'grid-cols-2'}`}>
         <SelectField
           label="Record type"
           value={kind}
@@ -66,15 +75,17 @@ export function AmountRecords({
             { value: 'both', label: 'Used and waste' },
           ]}
         />
-        <SelectField
-          label="Record unit"
-          value={unit}
-          onValueChange={setUnit}
-          options={[
-            { value: 'all', label: 'All units' },
-            ...units.map((value) => ({ value, label: unitLabels[value] })),
-          ]}
-        />
+        {!ingredient && (
+          <SelectField
+            label="Record unit"
+            value={unit}
+            onValueChange={setUnit}
+            options={[
+              { value: 'all', label: 'All units' },
+              ...units.map((value) => ({ value, label: unitLabels[value] })),
+            ]}
+          />
+        )}
       </div>
       {rows.length ? (
         <div className="overflow-hidden rounded-lg border border-border">

@@ -26,6 +26,8 @@ import { AnalyticsSkeleton } from './loading-skeletons';
 import { HouseholdSettings } from './household';
 import { Account } from './account';
 import { SlidingSelection } from './sliding-selection';
+import { useSharedUpdates } from './use-shared-updates';
+import type { InventoryHighlights } from '@/domain/shared-updates';
 const Analytics = dynamic(() => import('./analytics').then((module) => module.Analytics), {
   loading: AnalyticsSkeleton,
 });
@@ -44,7 +46,6 @@ export function Workspace({ initialState }: { initialState: AppState }) {
   const params = useSearchParams();
   const requestedTab = params.get('view');
   const tab = tabs.find((t) => t.id === requestedTab)?.id ?? 'inventory';
-  const [resetEpoch, setResetEpoch] = useState(0);
   function setTab(value: Tab) {
     // These views share one client workspace; switching them needs no server render.
     const url = new URL(window.location.href);
@@ -66,6 +67,14 @@ export function Workspace({ initialState }: { initialState: AppState }) {
     refetchOnWindowFocus: true,
     retry: (count, error) => !(error instanceof ApiError && error.status < 500) && count < 1,
   });
+  const highlights = useSharedUpdates(state);
+  const [seenResetId, setSeenResetId] = useState(0);
+  // Keep the reset key when that activity ages out of the bounded activity list.
+  const resetId = Math.max(
+    seenResetId,
+    state.activity.find((entry) => entry.action === 'demo_reset')?.id ?? 0,
+  );
+  if (resetId !== seenResetId) setSeenResetId(resetId);
   async function refresh() {
     await client.cancelQueries({ queryKey: stateKey });
     return client.fetchQuery({
@@ -82,7 +91,6 @@ export function Workspace({ initialState }: { initialState: AppState }) {
       confirmation: 'RESET',
     });
     client.setQueryData(stateKey, data);
-    setResetEpoch((value) => value + 1);
   }
   async function mutate(input: unknown) {
     const r = await api<Record<string, unknown>>('actions', input);
@@ -99,7 +107,7 @@ export function Workspace({ initialState }: { initialState: AppState }) {
   async function logout() {
     setError('');
     try {
-      const { error } = await browserDb().auth.signOut();
+      const { error } = await browserDb().auth.signOut({ scope: 'local' });
       if (error) throw error;
       client.clear();
       router.replace('/');
@@ -228,8 +236,9 @@ export function Workspace({ initialState }: { initialState: AppState }) {
       >
         <ErrorText error={error || (queryError ? message(queryError) : '')} />
         <HouseholdViews
-          key={`${state.household.id}:${resetEpoch}`}
+          key={`${state.household.id}:${resetId}`}
           state={state}
+          highlights={highlights}
           tab={tab}
           setTab={setTab}
           mutate={mutate}
@@ -251,6 +260,7 @@ export function Workspace({ initialState }: { initialState: AppState }) {
 
 function HouseholdViews({
   state,
+  highlights,
   tab,
   setTab,
   mutate,
@@ -260,6 +270,7 @@ function HouseholdViews({
   resetDemo,
 }: {
   state: AppState;
+  highlights: InventoryHighlights;
   tab: Tab;
   setTab: (tab: Tab) => void;
   mutate: Mutate;
@@ -276,6 +287,7 @@ function HouseholdViews({
       <div className="view-panel" hidden={tab !== 'inventory'}>
         <Inventory
           state={state}
+          highlights={highlights}
           mutate={mutate}
           focusedItemId={focusedItemId}
           onFocusHandled={() => setFocusedItemId(null)}

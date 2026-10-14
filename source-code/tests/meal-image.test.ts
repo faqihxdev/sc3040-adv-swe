@@ -53,6 +53,21 @@ const state: AppState = {
 };
 const ticket = { id: '11111111-1111-4111-8111-111111111111', recipe, trackedIds: ['rice'] };
 
+it('saved-demo tickets cannot start paid image generation', async () => {
+  mocks.state.mockResolvedValue(state);
+  mocks.verify.mockReturnValue({ ...ticket, source: 'saved-demo' });
+  const response = await POST(
+    new Request('http://127.0.0.1:3000/api/meals/image', {
+      method: 'POST',
+      headers: { origin: 'http://127.0.0.1:3000', 'content-type': 'application/json' },
+      body: JSON.stringify({ token: 'saved-ticket' }),
+    }),
+  );
+  expect(response.status).toBe(409);
+  expect(mocks.generateImage).not.toHaveBeenCalled();
+  expect(mocks.rpc).not.toHaveBeenCalled();
+});
+
 beforeEach(async () => {
   vi.stubEnv('AI_ENABLED', 'true');
   vi.stubEnv('OPENAI_API_KEY', 'test-key');

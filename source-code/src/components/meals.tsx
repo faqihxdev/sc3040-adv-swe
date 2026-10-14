@@ -13,11 +13,12 @@ import {
 import { toast } from 'sonner';
 import type { AppState, MealRequest, RankedMeal } from '@/domain/model';
 import type { MealGenerationStage } from '@/domain/meal-generation';
+import type { MealGenerationResult } from '@/domain/meal-generation';
 import { formatQuantity } from '@/domain/quantities';
 import { daysUntil, eligibleItems, todaySingapore, matchesExclusion } from '@/domain/meals';
 import { commonStaples, requestStaples } from '@/domain/staples';
 import { generateMeals } from '@/lib/meal-generation';
-import { message } from '@/lib/api';
+import { api, message } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { PageHeader } from './page-header';
 import { MealGenerationLoading } from './meal-generation-loading';
@@ -109,6 +110,7 @@ export function Meals({
   const [selected, setSelected] = useState<RankedMeal | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [loadingSaved, setLoadingSaved] = useState(false);
   const [stage, setStage] = useState<MealGenerationStage>('preparing');
   const [brief, setBrief] = useState<{
     servings: number;
@@ -145,14 +147,23 @@ export function Meals({
     }
   }, [active, preferencesOpen, selected, detail, busy]);
 
-  async function generate(event?: FormEvent<HTMLFormElement>) {
+  async function generate(event?: FormEvent<HTMLFormElement>, saved = false) {
     event?.preventDefault();
-    if (inFlight.current || selected || !eligible.length || !state.aiEnabled) return;
+    if (
+      selected ||
+      (saved
+        ? !state.demoMealsEnabled || loadingSaved
+        : inFlight.current || !eligible.length || !state.aiEnabled)
+    )
+      return;
+    if (saved) inFlight.current?.abort();
     const abort = new AbortController();
     inFlight.current = abort;
     submitted.current = true;
     focusRequested.current = true;
     setBusy(true);
+    setLoadingSaved(saved);
+    if (saved) setImageMeals([]);
     setStage('preparing');
     setBrief({ servings: request.servings, mealType: request.mealType });
     setDetail(null);
@@ -161,16 +172,19 @@ export function Meals({
     onPreferencesOpenChange(false);
     onShowResults();
     try {
-      const result = await generateMeals(
-        {
-          ...request,
-          staples: requestStaples(request.staples, stapleText, state.exclusions),
-        },
-        (value) => {
-          if (!abort.signal.aborted) setStage(value);
-        },
-        abort.signal,
-      );
+      const input = {
+        ...request,
+        staples: requestStaples(request.staples, stapleText, state.exclusions),
+      };
+      const result = saved
+        ? await api<MealGenerationResult>('meals/demo', input, abort.signal)
+        : await generateMeals(
+            input,
+            (value) => {
+              if (!abort.signal.aborted) setStage(value);
+            },
+            abort.signal,
+          );
       if (abort.signal.aborted) return;
       setMeals(result.meals);
       setImageMeals(result.meals);
@@ -183,6 +197,7 @@ export function Meals({
       if (inFlight.current === abort) {
         inFlight.current = null;
         setBusy(false);
+        setLoadingSaved(false);
       }
     }
   }
@@ -204,6 +219,12 @@ export function Meals({
     setDetail(meal);
   }
   const recipe = selected ?? detail;
+  const savedResults = (recipe ?? meals[0])?.source === 'saved-demo';
+  const fallbackButton = state.demoMealsEnabled ? (
+    <Button variant="ghost" onClick={() => void generate(undefined, true)}>
+      Use saved demo recipes
+    </Button>
+  ) : null;
   return (
     <div className="space-y-5">
       <PageHeader
@@ -218,6 +239,17 @@ export function Meals({
           ) : undefined
         }
       />
+      {savedResults && !busy && (
+        <div className="flex items-center gap-1 text-xs text-muted-foreground" role="status">
+          <span>Saved demo recipes</span>
+          <InfoHelp label="About saved demo recipes">
+            <p>
+              Generated in advance for the demo. Stock, exclusions and expiry scores are checked
+              again when loaded.
+            </p>
+          </InfoHelp>
+        </div>
+      )}
       {recipe ? (
         <section className="panel page-section min-w-0 space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -274,25 +306,33 @@ export function Meals({
               : 'Stock updates after you cook and confirm.'}
           </p>
         </section>
+      ) : busy && loadingSaved ? (
+        <section className="panel py-10 text-center text-sm text-muted-foreground" role="status">
+          Loading saved recipes…
+        </section>
       ) : busy ? (
         <MealGenerationLoading
           stage={stage}
           servings={brief.servings}
           mealType={brief.mealType}
           onCancel={cancelGeneration}
+          onUseSaved={state.demoMealsEnabled ? () => void generate(undefined, true) : undefined}
         />
       ) : (
         <div className="space-y-5">
           {error && (
             <div className="space-y-3">
               <ErrorText error={error} />
-              <Button
-                variant="secondary"
-                disabled={!eligible.length || !state.aiEnabled}
-                onClick={() => void generate()}
-              >
-                <RefreshCw size={16} /> Try again
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="secondary"
+                  disabled={!eligible.length || !state.aiEnabled}
+                  onClick={() => void generate()}
+                >
+                  <RefreshCw size={16} /> Try again
+                </Button>
+                {fallbackButton}
+              </div>
             </div>
           )}
           {notice && (meals.length > 0 || error) && (
@@ -370,6 +410,9 @@ export function Meals({
             )
           )}
         </div>
+      )}
+      {!recipe && !busy && !error && !meals.length && fallbackButton && (
+        <div className="flex justify-end">{fallbackButton}</div>
       )}
       <MealPreferences
         open={preferencesOpen && !selected && !busy}

@@ -68,7 +68,7 @@ describe('recommender boundary (mocked external provider)', () => {
     expect(mocks.generate).toHaveBeenCalledTimes(1);
   });
 
-  test('cancellation before work prevents quota reservation and provider calls', async () => {
+  test('cancellation before work prevents usage reservation and provider calls', async () => {
     const controller = new AbortController();
     controller.abort();
     await expect(recommend(kitchen, request, { signal: controller.signal })).rejects.toMatchObject({
@@ -92,16 +92,18 @@ describe('recommender boundary (mocked external provider)', () => {
     expect(mocks.generate).not.toHaveBeenCalled();
     expect(mocks.rpc).not.toHaveBeenCalled();
   });
-  test('persistent quota refusal makes no model call', async () => {
+  test('the per-user cooldown prevents a model call', async () => {
     mocks.rpc.mockResolvedValue({
       data: null,
-      error: { code: 'PT429', message: 'Request cap reached.' },
+      error: { code: 'PT429', message: 'Wait a few seconds before requesting again.' },
     });
     await expect(recommend(kitchen, request)).rejects.toMatchObject({ status: 429 });
     expect(mocks.generate).not.toHaveBeenCalled();
   });
   test('valid candidate is independently scored and signed without stock writes', async () => {
+    vi.stubEnv('AI_REQUEST_LIMIT', '0');
     const result = await recommend(kitchen, request);
+    expect(mocks.rpc).toHaveBeenCalledWith('reserve_ai', { actor: kitchen.user.id });
     expect(result.meals[0]).toMatchObject({ score: 100, coverage: 1, points: 3, totalPoints: 3 });
     expect(verifyMeal(result.meals[0].token, 'owner', 'kitchen').trackedIds).toEqual([rice.id]);
     expect(mocks.generate.mock.calls[0][0]).toMatchObject({
@@ -243,7 +245,7 @@ describe('recommender boundary (mocked external provider)', () => {
     expect(result.meals).toEqual([]);
     expect(result.message).toContain('No suggestions passed');
   });
-  test('malformed structured output gets exactly one retry and one quota reservation', async () => {
+  test('malformed structured output gets exactly one retry and one usage reservation', async () => {
     mocks.generate.mockRejectedValueOnce(mocks.malformed);
     expect((await recommend(kitchen, request)).meals).toHaveLength(1);
     expect(mocks.generate).toHaveBeenCalledTimes(2);

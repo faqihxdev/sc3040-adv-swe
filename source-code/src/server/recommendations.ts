@@ -65,7 +65,6 @@ export async function recommend(
   const admin = adminDb();
   const { data: callId, error } = await admin.rpc('reserve_ai', {
     actor: state.user.id,
-    request_limit: Number(process.env.AI_REQUEST_LIMIT ?? 100),
   });
   if (error) databaseError(error);
   // One reservation and at most two calls, including malformed-output or validation repair.

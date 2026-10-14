@@ -51,8 +51,8 @@ if (process.argv[2] === 'types') {
     MEAL_SIGNING_SECRET: old.MEAL_SIGNING_SECRET || randomBytes(32).toString('hex'),
     APP_ORIGIN: 'http://127.0.0.1:3000',
     AI_ENABLED: old.AI_ENABLED || 'false',
-    AI_REQUEST_LIMIT: old.AI_REQUEST_LIMIT || '100',
   };
+  delete config.AI_REQUEST_LIMIT;
   if (!config.NEXT_PUBLIC_SUPABASE_ANON_KEY || !config.SUPABASE_SERVICE_ROLE_KEY)
     throw new Error('Local credentials were not returned.');
   writeFileSync(

@@ -84,7 +84,10 @@ describe('meal image prompt and adapter', () => {
   });
 
   it('uses the requested model, low quality, webp and bounded retries', async () => {
+    vi.stubEnv('AI_REQUEST_LIMIT', '0');
     const result = await createMealImage(state, 'signed-token', ticket);
+    const reservation = mocks.rpc.mock.calls.find(([name]) => name === 'reserve_meal_image');
+    expect(reservation?.[1]).toEqual({ actor: state.user.id, cache_key: expect.any(String) });
     expect(result.image).toMatch(/^data:image\/webp;base64,/);
     const metadata = await sharp(Buffer.from(result.image.split(',')[1], 'base64')).metadata();
     expect(metadata).toMatchObject({ width: 768, height: 768, format: 'webp' });
@@ -121,7 +124,7 @@ describe('meal image prompt and adapter', () => {
     expect(prompt).toContain('Wash rice.');
   });
 
-  it('returns a ready cache hit without quota or provider work', async () => {
+  it('returns a ready cache hit without reservation or provider work', async () => {
     mocks.rpc.mockResolvedValueOnce({
       data: { status: 'ready', image: 'data:image/webp;base64,cached' },
       error: null,
@@ -142,23 +145,23 @@ describe('meal image prompt and adapter', () => {
     expect(mocks.rpc.mock.calls.map(([name]) => name)).toContain('fail_meal_image');
   });
 
-  it('preserves quota errors and releases the claim with a Supabase PromiseLike builder', async () => {
+  it('preserves stale claim errors with a Supabase PromiseLike builder', async () => {
     mocks.rpc.mockImplementation((name: string) => {
       const reply =
         name === 'claim_meal_image'
           ? { data: { status: 'claimed' }, error: null }
-          : name === 'reserve_meal_image' || name === 'reserve_ai'
+          : name === 'reserve_meal_image'
             ? {
                 data: null,
-                error: { code: 'PT429', message: 'Development AI call limit reached.' },
+                error: { code: 'PT409', message: 'Image generation claim is no longer available.' },
               }
             : { data: null, error: null };
       const resolved = Promise.resolve(reply);
       return { then: resolved.then.bind(resolved) };
     });
     await expect(createMealImage(state, 'signed-token', ticket)).rejects.toMatchObject({
-      status: 429,
-      message: 'Development AI call limit reached.',
+      status: 409,
+      message: 'Image generation claim is no longer available.',
     });
     expect(mocks.generateImage).not.toHaveBeenCalled();
     expect(mocks.rpc).toHaveBeenCalledWith('fail_meal_image', expect.anything());
@@ -230,7 +233,7 @@ describe('meal image endpoint', () => {
     expect(mocks.verify).toHaveBeenCalledWith('signed-token', 'user', 'household');
   });
 
-  it('does not spend quota when AI is disabled', async () => {
+  it('does not call the provider when AI is disabled', async () => {
     vi.stubEnv('AI_ENABLED', 'false');
     const response = await POST(request({ token: 'signed-token' }));
     expect(response.status).toBe(503);

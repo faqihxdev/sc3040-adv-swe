@@ -11,6 +11,7 @@ type Ticket = {
   recipe: Recipe;
   trackedIds: string[];
   ingredientNames?: Record<string, string>;
+  source?: 'saved-demo';
 };
 export function signMeal(
   userId: string,
@@ -19,6 +20,7 @@ export function signMeal(
   trackedIds: string[],
   sessionId: string = randomUUID(),
   ingredientNames?: Record<string, string>,
+  source?: 'saved-demo',
 ) {
   const payload = Buffer.from(
     JSON.stringify({
@@ -30,6 +32,7 @@ export function signMeal(
       recipe: recipeSchema.parse(recipe),
       trackedIds,
       ingredientNames,
+      ...(source ? { source } : {}),
     } satisfies Ticket),
   ).toString('base64url');
   return `${payload}.${signature(payload)}`;

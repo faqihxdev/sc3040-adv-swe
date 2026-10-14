@@ -27,6 +27,10 @@ export async function loadState(): Promise<AppState> {
     outcomes: [],
     exclusions: profile.exclusions,
     aiEnabled: process.env.AI_ENABLED === 'true',
+    demoMealsEnabled:
+      process.env.DEMO_MODE === 'true' &&
+      Boolean(household) &&
+      household?.id === process.env.DEMO_HOUSEHOLD_ID,
     demoResetEnabled:
       process.env.DEMO_MODE === 'true' &&
       household?.id === process.env.DEMO_HOUSEHOLD_ID &&

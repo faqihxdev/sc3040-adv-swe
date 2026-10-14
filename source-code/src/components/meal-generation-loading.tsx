@@ -89,11 +89,13 @@ export function MealGenerationLoading({
   servings,
   mealType,
   onCancel,
+  onUseSaved,
 }: {
   stage?: MealGenerationStage;
   servings?: number;
   mealType?: string;
   onCancel?: () => void;
+  onUseSaved?: () => void;
 }) {
   const [phrase, setPhrase] = useState(0);
   const [takingLonger, setTakingLonger] = useState(false);
@@ -143,6 +145,11 @@ export function MealGenerationLoading({
       {onCancel && (
         <Button type="button" variant="outline" className="mt-3 min-w-28" onClick={onCancel}>
           Cancel
+        </Button>
+      )}
+      {takingLonger && onUseSaved && (
+        <Button type="button" variant="ghost" className="mt-2" onClick={onUseSaved}>
+          Use saved demo recipes
         </Button>
       )}
     </section>

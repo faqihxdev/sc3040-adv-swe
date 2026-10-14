@@ -117,6 +117,15 @@ Reapply hosted auth config and update Vercel `APP_ORIGIN` before redeploying.
 - Keep database backups; inactive Free projects can pause.
 - Hosted signup/recovery needs custom SMTP.
 
+## Saved demo recipes
+
+- Cook offers **Use saved demo recipes** below the empty state, beside retry, and after 30 seconds of generation. Loading them cancels the pending live request.
+- Prepared for Dinner for 2, mushrooms excluded, common staples selected, with bean sprouts preferred. The three recipes and illustrations load without paid AI calls.
+- The server checks current quantities, expiry dates, exclusions and selected staples, then issues fresh cooking tickets. Confirmation and Insights use the normal workflow. Results show **Saved demo recipes** and retain that source in the meal record.
+- Reset the demo before rehearsal for all three options. This fallback requires the app and database to be reachable.
+
+The saved set comes from the second of three live GPT-6 Luna trials against the reset seed. Each trial returned three validated recipes in 20.8 to 21.1 seconds. Recipe data is in `source-code/src/server/demo-recipes.json`; prepared low-quality dish illustrations are in `source-code/public/demo-meals/`.
+
 ## Backup / recovery
 
 - Back up the hosted database weekly and before migrations/demo.

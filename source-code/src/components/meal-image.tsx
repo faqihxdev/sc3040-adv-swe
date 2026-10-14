@@ -55,8 +55,10 @@ export function useMealImages(meals: RankedMeal[]) {
     const batch: Batch = {
       abort: new AbortController(),
       meals: new Map(meals.map((meal) => [meal.token, meal])),
-      queue: meals.map((meal) => meal.token),
-      queued: new Set(meals.map((meal) => meal.token)),
+      queue: meals.filter((meal) => meal.source !== 'saved-demo').map((meal) => meal.token),
+      queued: new Set(
+        meals.filter((meal) => meal.source !== 'saved-demo').map((meal) => meal.token),
+      ),
       active: new Set(),
       failed: new Set(),
       retried: new Set(),
@@ -162,9 +164,9 @@ export function MealImage({
       )}
       data-meal-image
     >
-      {value?.image ? (
+      {(meal.source === 'saved-demo' && meal.savedImage) || value?.image ? (
         <Image
-          src={value.image}
+          src={meal.source === 'saved-demo' && meal.savedImage ? meal.savedImage : value!.image!}
           alt={`AI illustration of ${meal.name}`}
           fill
           unoptimized

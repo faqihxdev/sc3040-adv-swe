@@ -9,6 +9,7 @@ import {
   RefreshCw,
   X,
   SlidersHorizontal,
+  BookOpen,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { AppState, MealRequest, RankedMeal } from '@/domain/model';
@@ -35,6 +36,36 @@ function usedSoon(meal: RankedMeal) {
   return meal.trackedItems
     .filter((item) => daysUntil(item.expiry_date) <= 3)
     .sort((a, b) => a.expiry_date.localeCompare(b.expiry_date));
+}
+function SavedDemoAction({ waiting, onClick }: { waiting: boolean; onClick: () => void }) {
+  const [ready, setReady] = useState(!waiting);
+  useEffect(() => {
+    if (!waiting) return;
+    const timer = window.setTimeout(() => setReady(true), 30_000);
+    return () => window.clearTimeout(timer);
+  }, [waiting]);
+  return (
+    <div className="mt-auto flex min-h-11 justify-end">
+      {ready && (
+        <button
+          type="button"
+          aria-label="Use saved demo recipes"
+          onClick={onClick}
+          className="group inline-flex min-h-11 cursor-pointer items-center rounded-sm text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+        >
+          <span
+            aria-hidden="true"
+            className="translate-x-1 opacity-0 transition-[opacity,transform] duration-150 group-hover:translate-x-0 group-hover:opacity-100 group-focus-visible:translate-x-0 group-focus-visible:opacity-100 motion-reduce:transition-none"
+          >
+            Use saved
+          </span>
+          <span className="grid size-11 place-items-center" aria-hidden="true">
+            <BookOpen size={17} />
+          </span>
+        </button>
+      )}
+    </div>
+  );
 }
 function MealContext({ meal }: { meal: RankedMeal }) {
   const soon = usedSoon(meal);
@@ -220,13 +251,8 @@ export function Meals({
   }
   const recipe = selected ?? detail;
   const savedResults = (recipe ?? meals[0])?.source === 'saved-demo';
-  const fallbackButton = state.demoMealsEnabled ? (
-    <Button variant="ghost" onClick={() => void generate(undefined, true)}>
-      Use saved demo recipes
-    </Button>
-  ) : null;
   return (
-    <div className="space-y-5">
+    <div className="flex min-h-[calc(100dvh-max(1.5rem,env(safe-area-inset-top))-7rem)] flex-col gap-5 sm:min-h-[calc(100dvh-9rem)] lg:min-h-[calc(100dvh-5rem)]">
       <PageHeader
         artwork="cook"
         headingRef={heading}
@@ -316,7 +342,6 @@ export function Meals({
           servings={brief.servings}
           mealType={brief.mealType}
           onCancel={cancelGeneration}
-          onUseSaved={state.demoMealsEnabled ? () => void generate(undefined, true) : undefined}
         />
       ) : (
         <div className="space-y-5">
@@ -331,7 +356,6 @@ export function Meals({
                 >
                   <RefreshCw size={16} /> Try again
                 </Button>
-                {fallbackButton}
               </div>
             </div>
           )}
@@ -411,8 +435,12 @@ export function Meals({
           )}
         </div>
       )}
-      {!recipe && !busy && !error && !meals.length && fallbackButton && (
-        <div className="flex justify-end">{fallbackButton}</div>
+      {!recipe && !loadingSaved && state.demoMealsEnabled && (busy || error || !meals.length) && (
+        <SavedDemoAction
+          key={String(busy)}
+          waiting={busy}
+          onClick={() => void generate(undefined, true)}
+        />
       )}
       <MealPreferences
         open={preferencesOpen && !selected && !busy}

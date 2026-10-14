@@ -119,7 +119,7 @@ Reapply hosted auth config and update Vercel `APP_ORIGIN` before redeploying.
 
 ## Saved demo recipes
 
-- Cook offers **Use saved demo recipes** below the empty state, beside retry, and after 30 seconds of generation. Loading them cancels the pending live request.
+- Cook has a muted book icon at the bottom right on empty/error screens and after 30 seconds of generation. Hover or keyboard focus reveals **Use saved**; click or tap loads the recipes and cancels the pending live request.
 - Prepared for Dinner for 2, mushrooms excluded, common staples selected, with bean sprouts preferred. The three recipes and illustrations load without paid AI calls.
 - The server checks current quantities, expiry dates, exclusions and selected staples, then issues fresh cooking tickets. Confirmation and Insights use the normal workflow. Results show **Saved demo recipes** and retain that source in the meal record.
 - Reset the demo before rehearsal for all three options. This fallback requires the app and database to be reachable.

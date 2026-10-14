@@ -1,0 +1,33 @@
+.highlight {
+  --change-foreground: var(--accent-foreground);
+  animation: updated 6s ease-out forwards;
+}
+
+:global(.dark) .highlight {
+  --change-foreground: var(--primary);
+}
+
+@keyframes updated {
+  0%,
+  45% {
+    color: var(--change-foreground);
+  }
+  100% {
+    color: inherit;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .highlight {
+    animation: none;
+    color: var(--change-foreground);
+  }
+}
+
+@media (forced-colors: active) {
+  .highlight {
+    animation: none;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+}

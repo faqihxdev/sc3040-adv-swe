@@ -36,7 +36,7 @@ export function Account({
     setResetError('');
     try {
       await resetDemo();
-      toast.success('Demo ingredients and history restored.');
+      toast.success('Demo data restored. Dietary exclusions cleared.');
     } catch (error) {
       setResetError(message(error));
       setResetBusy(false);
@@ -86,7 +86,7 @@ export function Account({
             <div className="min-w-0 flex-1 basis-48">
               <h2 className="text-base font-bold">Demo data</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Restore sample ingredients and meal history.
+                Restore sample data and clear dietary exclusions.
               </p>
             </div>
             <Button
@@ -121,7 +121,7 @@ export function Account({
       {resetting && (
         <Modal
           title="Reset demo data?"
-          description="Replace this household’s inventory, activity and meal history with the sample data. This cannot be undone."
+          description="Restore sample inventory and history, and clear dietary exclusions for every household member. This cannot be undone."
           onClose={() => !resetBusy && setResetting(false)}
           footer={
             <>
@@ -136,8 +136,8 @@ export function Account({
         >
           <ErrorText error={resetError} />
           <p className="text-sm text-muted-foreground">
-            Accounts, members, preferences and AI usage are kept. Cooking sessions on this device
-            will be cleared.
+            Accounts, passwords, members and AI usage are kept. Open cooking sessions are cleared
+            when each device refreshes.
           </p>
         </Modal>
       )}

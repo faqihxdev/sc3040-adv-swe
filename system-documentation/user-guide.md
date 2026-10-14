@@ -1,7 +1,7 @@
 # UseEatNow quick guide
 
 Private demo: use the accounts shared by the team. Local accounts/setup are in
-the [app README](../source-code/README.md). Local and hosted passwords differ.
+the [app README](../source-code/README.md).
 
 ## UC1: Find meals
 
@@ -44,6 +44,7 @@ the [app README](../source-code/README.md). Local and hosted passwords differ.
 
 - Create or join with the owner's invite code. Owners can invite, remove members or transfer ownership; members can leave.
 - Saved changes refresh immediately; other active clients refresh on focus and poll every 30 seconds.
+- Changed inventory rows briefly highlight. Updates from other members show a notification.
 - Account controls appearance, sign out and typed account deletion. Owners first transfer ownership or delete the household.
 
 ## Conflicts and safety
@@ -57,5 +58,6 @@ the [app README](../source-code/README.md). Local and hosted passwords differ.
 ## Demo reset
 
 - Account → Reset to seed is available only to the allowlisted demo owner.
-- Reset replaces inventory/history while retaining accounts, members, preferences and AI usage.
+- Reset restores sample inventory/history and clears dietary exclusions for all household members.
+- Accounts, passwords, membership and AI usage are kept. Open sessions clear their cooking drafts on the next refresh.
 - The seed contains 40 ingredients and labelled sample history, with dates relative to the reset day.

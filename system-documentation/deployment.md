@@ -97,13 +97,20 @@ From `source-code`:
 
 For rotated keys, update Vercel Production environment variables and redeploy.
 
+To change demo logins, set `DEMO_ALEX_PASSWORD` and `DEMO_SAM_PASSWORD` in
+`.env.hosted`, using passwords of at least 8 characters. Run
+`node scripts/demo-passwords.mjs --hosted`, then `node scripts/hosted.mjs credentials`.
+The script verifies both logins and preserves app data. Password changes take effect
+immediately; share the refreshed credentials privately.
+
 For a changed domain, run `node scripts/hosted.mjs origin <new-https-origin>`.
 Reapply hosted auth config and update Vercel `APP_ORIGIN` before redeploying.
 
 ## Demo safeguards
 
 - Registration is disabled; passwords are in ignored `.demo-credentials.local`.
-- Account → Reset to seed refreshes synthetic inventory/history with rolling dates. Only the allowlisted owner can reset; accounts, membership and AI usage survive.
+- Account → Reset to seed restores sample inventory/history with rolling dates and clears every member's dietary exclusions.
+- Only the allowlisted owner can reset. Accounts, passwords, membership and AI usage are kept.
 - Track all AI costs, including dish images and retries, against the S$10 project ceiling. Pause paid calls before exceeding it.
 - Image-cache rows expire after 24 hours; the cache is private and capped at 100 rows and 64 MB.
 - Keep database backups; inactive Free projects can pause.

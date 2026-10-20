@@ -71,6 +71,25 @@ Use `migration-list` to verify the target before a release.
 The demo is deployed. Formal acceptance, a reviewed release revision and verified
 GitLab submission remain separate checks.
 
+### Reservation deployment, 20 October 2026
+
+- Source: `72722f4`, [PR #75](https://github.com/faqihxdev/sc3040-adv-swe/pull/75).
+- Vercel deployment: `dpl_YNs2UVpd1dU2JtbAHfnKksxu6jGx`, serving the production URL.
+- Supabase migrations `202610200001_cooking_reservations.sql` and
+  `202610200002_reservation_membership_updates.sql` are applied; the migration check is clean.
+- A private pre-migration export retains roles, schema, data and migration history.
+  The previous Vercel deployment remains available for compatible recovery.
+- [Release checks](https://github.com/faqihxdev/sc3040-adv-swe/actions/runs/39360777335)
+  passed on `e089cdc`, whose tree matches `72722f4`. See the
+  [reservation cases and results](testing.md#reservation-acceptance-cases).
+- Hosted checks passed for both logins, roles, atomic holds, shared visibility,
+  restored sessions, renewal, repeat-start safety, stale rejection and cancellation.
+  Recorded inventory and meal history were preserved. Saved demo recipes supplied
+  the smoke test; no paid AI calls were needed.
+- Successful confirmation is covered by the local SQL/browser release suites.
+  Hosted confirmation, live AI quality/timing and other manual acceptance remain
+  separate checks.
+
 ## Release checks
 
 From the repository root:

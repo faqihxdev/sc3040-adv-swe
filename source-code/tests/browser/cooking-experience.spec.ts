@@ -198,6 +198,9 @@ test('image retries stop when cooking ends and skip account or usage errors', as
     .getByRole('dialog', { name: 'End this cooking session?', exact: true })
     .getByRole('button', { name: 'End session', exact: true })
     .click();
+  await expect(
+    page.getByRole('dialog', { name: 'End this cooking session?', exact: true }),
+  ).toBeHidden();
   await page.clock.runFor(5_000);
   expect(started).toBe(3);
   await expect(page.getByText('Retrying image', { exact: true })).toHaveCount(0);

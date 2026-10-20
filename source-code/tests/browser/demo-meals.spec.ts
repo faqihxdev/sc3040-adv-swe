@@ -3,7 +3,7 @@ import { test, expect, signIn, state, action, selectOption } from './fixtures';
 import { makeDemoSeed } from '../../src/domain/demo-data';
 import { todaySingapore, validateAndRank } from '../../src/domain/meals';
 import { commonStaples } from '../../src/domain/staples';
-import type { AppState, RankedMeal } from '../../src/domain/model';
+import { recipeSchema, type AppState, type RankedMeal } from '../../src/domain/model';
 import saved from '../../src/server/demo-recipes.json';
 
 // Mock only the saved-result transport. Confirmation and the disposable database are real.
@@ -33,7 +33,7 @@ function savedResult(current: AppState): RankedMeal[] {
         userId: current.user.id,
         householdId: current.household!.id,
         expires: Date.now() + 86400000,
-        recipe: meal,
+        recipe: recipeSchema.parse(meal),
         trackedIds: meal.trackedItems.map((i) => i.id),
         ingredientNames: meal.ingredientNames,
         source: 'saved-demo',
@@ -156,6 +156,9 @@ test('saved demo recovery continues through confirmation and Insights without AI
   expect((await state(page)).outcomes).toHaveLength(0);
   await page.getByRole('button', { name: 'Cook this', exact: true }).first().click();
   await expect(page.getByText('Saved demo recipes', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'I’ve finished cooking' })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'I’ve finished cooking' })).toBeVisible();
   await page.getByRole('button', { name: 'I’ve finished cooking' }).click();
   await page.getByRole('button', { name: 'Waste details for Bean sprouts', exact: true }).click();
   await page.getByLabel('Waste amount for Bean sprouts (optional)', { exact: true }).fill('10');

@@ -64,6 +64,7 @@ Use `migration-list` to verify the target before a release.
 - Back up before applying migrations. Existing unmeasured items show Set amount.
 - Enter real amounts and units, or use the demo owner's reset for fresh sample data.
 - New confirmations save expiry snapshots. Older missing snapshots remain untracked.
+- Apply pending migrations before the reservation-enabled app build. They add service-only cooking operations, stock protection and membership cleanup. The previous confirmation entry point remains compatible during rollout.
 - Quantity confirmation contracts differ from the stock-band version. Check schema
   compatibility before restoring an older app deployment.
 

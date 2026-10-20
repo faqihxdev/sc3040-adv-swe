@@ -44,26 +44,28 @@ Recorded results and pending review are indexed in [GitHub #49](https://github.c
 
 Executable cases contain their inputs, steps and assertions in `source-code/tests`.
 
-| Case group                                              | Input / action → expected result                                                                                                                                   |
-| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `meals.test.ts`, `staples.test.ts`                      | Past/today/3/4/7/8-day dates, empty stock, exclusions and ties → exact eligibility, points and order; selected staples add no points.                              |
-| `analytics.test.ts`                                     | Positive quantity events, renamed snapshots and Singapore midnight/Monday → counts, unit-separated totals and ingredient waste shares.                             |
-| `meal-token.test.ts`, `recommendations.test.ts`         | Forged/expired/wrong-user tickets, bad AI IDs/schema, unavailable provider or active cooldown → rejection, bounded retry and no unauthorised writes.                |
-| `photo*.test.ts`, `state.test.ts`, `demo-reset.test.ts` | Invalid uploads, unavailable AI, paging limits and reset scope → validation, bounded data and permission checks.                                                   |
-| `core-database.sql`                                     | CRUD/undo, foreign household, stale/duplicate confirmation, transfer/leave/delete → isolated, atomic, version-checked and idempotent operations.                   |
-| `photo-batch.sql`, `demo-reset.sql`                     | Invalid/stale writes → rollback. Demo reset clears members' exclusions, preserves accounts/usage history and isolates other households.                           |
-| `shared-updates.test.ts`, `browser/shared-updates.spec.ts` | Two-member updates → row highlight, quantity notice, reduced-motion support and quiet unchanged refreshes. Remote reset clears the open dietary editor.          |
-| `browser/*.spec.ts`                                     | UC1–UC6, manual/photo drafts, previews, cancellation, failure/retry, analytics, exclusions, access and account deletion → asserted UI plus real local saved state. |
+| Case group                                                                  | Input / action → expected result                                                                                                                                   |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `meals.test.ts`, `staples.test.ts`                                          | Past/today/3/4/7/8-day dates, empty stock, exclusions and ties → exact eligibility, points and order; selected staples add no points.                              |
+| `analytics.test.ts`                                                         | Positive quantity events, renamed snapshots and Singapore midnight/Monday → counts, unit-separated totals and ingredient waste shares.                             |
+| `meal-token.test.ts`, `recommendations.test.ts`                             | Forged/expired/wrong-user tickets, bad AI IDs/schema, unavailable provider or active cooldown → rejection, bounded retry and no unauthorised writes.               |
+| `photo*.test.ts`, `state.test.ts`, `demo-reset.test.ts`                     | Invalid uploads, unavailable AI, paging limits and reset scope → validation, bounded data and permission checks.                                                   |
+| `core-database.sql`                                                         | CRUD/undo, foreign household, stale/duplicate confirmation, transfer/leave/delete → isolated, atomic, version-checked and idempotent operations.                   |
+| `cooking-reservations.sql`, `reservations.test.ts`, `cooking-route.test.ts` | Atomic portion reservations, expiry/renewal, actual-use reconciliation, protected edits/undo, membership cleanup, signed tickets and access checks.                |
+| `photo-batch.sql`, `demo-reset.sql`                                         | Invalid/stale writes → rollback. Demo reset clears members' exclusions, preserves accounts/usage history and isolates other households.                            |
+| `shared-updates.test.ts`, `browser/shared-updates.spec.ts`                  | Two-member updates → row highlight, quantity notice, reduced-motion support and quiet unchanged refreshes. Remote reset clears the open dietary editor.            |
+| `browser/*.spec.ts`                                                         | UC1–UC6, manual/photo drafts, previews, cancellation, failure/retry, analytics, exclusions, access and account deletion → asserted UI plus real local saved state. |
 
 ### Quantity and image regressions
 
-| Cases                                                                     | Checks                                                                                              |
-| ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `quantities.test.ts`, `meals.test.ts`                                     | Decimal boundaries, matching units, sufficient amounts and unmeasured-item exclusion.               |
-| `expiry-insights.test.ts`                                                 | Saved expiry at 0/3/4 days, Singapore dates, invalid/missing snapshots and per-unit records.        |
-| `meal-image.test.ts`, `meal-image-cache.sql`                              | Image claims, cache bounds, generation beyond 100 calls, legacy RPC compatibility, cooldown and permissions. |
-| `browser/cooking-confirmation.spec.ts`                                    | Combined confirmation, per-ingredient waste, calculated left and safe refresh retry.                |
-| `browser/cooking-experience.spec.ts`, `browser/quantity-insights.spec.ts` | Concurrent images, one automatic transient retry, usable recipe fallback and Insights interactions. |
+| Cases                                                                     | Checks                                                                                                                           |
+| ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `quantities.test.ts`, `meals.test.ts`                                     | Decimal boundaries, matching units, sufficient amounts and unmeasured-item exclusion.                                            |
+| `expiry-insights.test.ts`                                                 | Saved expiry at 0/3/4 days, Singapore dates, invalid/missing snapshots and per-unit records.                                     |
+| `meal-image.test.ts`, `meal-image-cache.sql`                              | Image claims, cache bounds, generation beyond 100 calls, legacy RPC compatibility, cooldown and permissions.                     |
+| `browser/cooking-confirmation.spec.ts`                                    | Combined confirmation, per-ingredient waste, calculated left and safe refresh retry.                                             |
+| `browser/cooking-reservations.spec.ts`                                    | Real two-member races, shared portions after restock, overuse rejection, expiry/reacquisition, reload recovery and cancellation. |
+| `browser/cooking-experience.spec.ts`, `browser/quantity-insights.spec.ts` | Concurrent images, one automatic transient retry, usable recipe fallback and Insights interactions.                              |
 
 Evidence archives retain the original failure and affected retest. For the
 6 October run, `reports/release-2026-10-06/` holds the full browser report,

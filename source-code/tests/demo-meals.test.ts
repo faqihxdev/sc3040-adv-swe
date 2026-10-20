@@ -133,3 +133,20 @@ test('selects a sufficient earliest-expiring batch and recalculates scores', () 
   expect(meal.totalPoints).toBe(70);
   expect(meal.score).toBeCloseTo((100 * 13) / 70);
 });
+
+test('saved recipes use unreserved amounts and leave recorded stock unchanged', () => {
+  const sprouts = state.items.find((item) => item.name === 'Bean sprouts')!;
+  state.reservations = [
+    {
+      itemId: sprouts.id,
+      userId: 'sam',
+      sessionId: 'other',
+      amount: 100,
+      expiresAt: new Date(Date.now() + 7200000).toISOString(),
+    },
+  ];
+  const result = savedDemoMeals(state, request);
+  expect(result.meals).toHaveLength(2);
+  expect(result.meals.some((meal) => meal.name.includes('Bean Sprout'))).toBe(false);
+  expect(sprouts.quantity).toBe(180);
+});

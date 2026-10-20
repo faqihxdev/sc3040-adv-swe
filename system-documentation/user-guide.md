@@ -50,6 +50,8 @@ the [app README](../source-code/README.md).
 ## Conflicts and safety
 
 - Conflicting write: reload current state and review again. Retry the same failed confirmation.
+- `Cook this` reserves recipe portions. Inventory shows the reserved amount, member and remaining availability. Refreshing restores the cooking session.
+- Confirm actual use and waste to release unused portions, or choose End session to release everything. Reservations expire after two hours away from the app.
 - AI failure: preferences remain saved. Use Try again or Change preferences.
 - Past-date/depleted items remain in records and are excluded from recommendations.
 - Amounts and dates are self-reported. Check actual availability and food safety before cooking.

@@ -64,7 +64,7 @@ test('confirmation stores signed provenance with the normal transaction', async 
   );
   expect(response.status).toBe(200);
   expect(mocks.rpc).toHaveBeenCalledWith(
-    'confirm_meal',
+    'confirm_reserved_meal',
     expect.objectContaining({ recipe_data: expect.objectContaining({ source: 'saved-demo' }) }),
   );
 });

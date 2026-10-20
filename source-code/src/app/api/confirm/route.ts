@@ -19,7 +19,7 @@ export async function POST(request: Request) {
       throw new AppError('Review every tracked recipe ingredient.');
     if (input.changes.some((change) => change.discardedAmount > 0 && !change.discardReason))
       throw new AppError('Choose a reason for discarded food.');
-    const { data, error } = await adminDb().rpc('confirm_meal', {
+    const { data, error } = await adminDb().rpc('confirm_reserved_meal', {
       actor: state.user.id,
       household: state.household.id,
       session_id: ticket.id,

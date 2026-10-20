@@ -49,6 +49,24 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 describe('recommender boundary (mocked external provider)', () => {
+  test('sends only unreserved quantities to the model and rejects amounts that exceed them', async () => {
+    const state = {
+      ...kitchen,
+      reservations: [
+        {
+          itemId: rice.id,
+          userId: 'sam',
+          sessionId: 'other',
+          amount: 450,
+          expiresAt: new Date(Date.now() + 7200000).toISOString(),
+        },
+      ],
+    };
+    const result = await recommend(state, request);
+    expect(JSON.parse(mocks.generate.mock.calls[0][0].prompt).inventory[0].quantity).toBe(50);
+    expect(result.meals).toEqual([]);
+    expect(kitchen.items[0].quantity).toBe(500);
+  });
   test('reports generation stages and forwards cancellation to the provider', async () => {
     const stages: string[] = [];
     const controller = new AbortController();

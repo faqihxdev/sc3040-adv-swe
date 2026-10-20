@@ -12,6 +12,7 @@ import { quantityAvailable, unitSchema } from '@/domain/quantities';
 import { AppError } from './errors';
 import { signMeal } from './meal-token';
 import savedRecipes from './demo-recipes.json';
+import { availableItems } from '@/domain/reservations';
 
 export function demoMealsEnabled(state: Pick<AppState, 'household'>) {
   return (
@@ -24,6 +25,7 @@ export function demoMealsEnabled(state: Pick<AppState, 'household'>) {
 /** A saved Lab 4 set, rebound to current stock and signed like live suggestions. */
 export function savedDemoMeals(state: AppState, request: MealRequest) {
   if (!demoMealsEnabled(state)) throw new AppError('Saved demo recipes are unavailable.', 403);
+  state = { ...state, items: availableItems(state) };
   if (
     request.servings !== 2 ||
     request.mealType !== 'Dinner' ||

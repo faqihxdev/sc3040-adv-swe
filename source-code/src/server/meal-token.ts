@@ -1,7 +1,7 @@
 import 'server-only';
 import { createHmac, timingSafeEqual, randomUUID } from 'node:crypto';
 import { recipeSchema, type Recipe } from '@/domain/model';
-import { AppError } from './state';
+import { AppError } from './errors';
 type Ticket = {
   format: 2;
   id: string;

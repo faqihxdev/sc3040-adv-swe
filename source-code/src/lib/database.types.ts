@@ -74,6 +74,41 @@ export type Database = {
           },
         ];
       };
+      cooking_sessions: {
+        Row: {
+          expires_at: string;
+          household_id: string;
+          id: string;
+          meal_data: NonNullable<Json>;
+          recipe: NonNullable<Json>;
+          user_id: string;
+        };
+        Insert: {
+          expires_at?: string;
+          household_id: string;
+          id: string;
+          meal_data: NonNullable<Json>;
+          recipe: NonNullable<Json>;
+          user_id: string;
+        };
+        Update: {
+          expires_at?: string;
+          household_id?: string;
+          id?: string;
+          meal_data?: NonNullable<Json>;
+          recipe?: NonNullable<Json>;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'cooking_sessions_household_id_fkey';
+            columns: ['household_id'];
+            isOneToOne: false;
+            referencedRelation: 'households';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       households: {
         Row: {
           created_at: string;
@@ -100,6 +135,39 @@ export type Database = {
           version?: number;
         };
         Relationships: [];
+      };
+      ingredient_reservations: {
+        Row: {
+          amount: number;
+          item_id: string;
+          session_id: string;
+        };
+        Insert: {
+          amount: number;
+          item_id: string;
+          session_id: string;
+        };
+        Update: {
+          amount?: number;
+          item_id?: string;
+          session_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'ingredient_reservations_item_id_fkey';
+            columns: ['item_id'];
+            isOneToOne: false;
+            referencedRelation: 'inventory';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'ingredient_reservations_session_id_fkey';
+            columns: ['session_id'];
+            isOneToOne: false;
+            referencedRelation: 'cooking_sessions';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       inventory: {
         Row: {
@@ -345,7 +413,22 @@ export type Database = {
         };
         Returns: string;
       };
+      confirm_reserved_meal: {
+        Args: {
+          actor: string;
+          changes: Json;
+          household: string;
+          recipe_data: Json;
+          session_id: string;
+        };
+        Returns: string;
+      };
+      cooking_state: { Args: Record<PropertyKey, never>; Returns: Json };
       fail_meal_image: { Args: { cache_key: string }; Returns: undefined };
+      manage_cooking: {
+        Args: { action: string; actor: string; household: string; session_id: string };
+        Returns: undefined;
+      };
       member_directory: {
         Args: Record<PropertyKey, never>;
         Returns: {
@@ -358,16 +441,12 @@ export type Database = {
         Args: { call_id: string; inputs: number; outputs: number };
         Returns: undefined;
       };
-      reserve_ai: {
-        Args: { actor: string } | { actor: string; request_limit: number };
-        Returns: string;
-      };
-      reserve_meal_image: {
-        Args:
-          | { actor: string; cache_key: string }
-          | { actor: string; cache_key: string; request_limit: number };
-        Returns: string;
-      };
+      reserve_ai:
+        | { Args: { actor: string }; Returns: string }
+        | { Args: { actor: string; request_limit: number }; Returns: string };
+      reserve_meal_image:
+        | { Args: { actor: string; cache_key: string }; Returns: string }
+        | { Args: { actor: string; cache_key: string; request_limit: number }; Returns: string };
       reset_demo: {
         Args: {
           actor: string;
@@ -378,6 +457,16 @@ export type Database = {
           outcomes_data: Json;
         };
         Returns: undefined;
+      };
+      start_cooking: {
+        Args: {
+          actor: string;
+          household: string;
+          meal_data: Json;
+          recipe_data: Json;
+          session_id: string;
+        };
+        Returns: Json;
       };
     };
     Enums: {

@@ -9,6 +9,7 @@ import { adminDb } from '@/lib/supabase/server';
 import { AppError } from './state';
 import { databaseError } from './http';
 import { signMeal } from './meal-token';
+import { availableItems } from '@/domain/reservations';
 import type { MealGenerationStage } from '@/domain/meal-generation';
 
 const MODEL = 'gpt-6-luna';
@@ -21,6 +22,7 @@ export async function recommend(
   options.signal?.throwIfAborted();
   options.onStage?.('preparing');
   if (!state.household) throw new AppError('Join a household first.');
+  state = { ...state, items: availableItems(state) };
   const today = todaySingapore();
   const items = eligibleItems(state.items, state.exclusions, request.excludedIds, today);
   if (!items.length)

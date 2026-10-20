@@ -10,6 +10,7 @@ import {
   remainingQuantity,
 } from '@/domain/quantities';
 import { validateChanges } from '@/domain/meals';
+import { reservedAmount } from '@/domain/reservations';
 import { api, ApiError, message } from '@/lib/api';
 import { Button } from './ui/button';
 import { Busy, ErrorText, Modal } from './common';
@@ -29,6 +30,24 @@ type DraftChange = Omit<Change, 'usedAmount' | 'discardedAmount'> & {
   usedAmount: number | null;
   discardedAmount: number | null;
 };
+type ConfirmationItem = Item & { availableQuantity: number | null };
+function confirmationItems(meal: RankedMeal, state: AppState): ConfirmationItem[] {
+  return meal.trackedItems.map((snapshot) => {
+    const item = state.items.find((current) => current.id === snapshot.id) ?? snapshot;
+    return {
+      ...item,
+      availableQuantity:
+        item.quantity === null
+          ? null
+          : Math.max(
+              0,
+              Math.round(
+                (item.quantity - reservedAmount(item.id, state.reservations, meal.sessionId)) * 100,
+              ) / 100,
+            ),
+    };
+  });
+}
 
 function initialChanges(meal: RankedMeal, items: Item[]): DraftChange[] {
   return items.map((item) => ({
@@ -42,14 +61,8 @@ function initialChanges(meal: RankedMeal, items: Item[]): DraftChange[] {
 }
 
 export function MealConfirmation({ meal, state, refresh, close, complete }: MealConfirmationProps) {
-  const initialItems = useMemo(
-    () =>
-      meal.trackedItems.map(
-        (item) => state.items.find((current) => current.id === item.id) ?? item,
-      ),
-    [meal, state.items],
-  );
-  const [items, setItems] = useState<Item[]>(initialItems);
+  const initialItems = useMemo(() => confirmationItems(meal, state), [meal, state]);
+  const [items, setItems] = useState<ConfirmationItem[]>(initialItems);
   const [changes, setChanges] = useState<DraftChange[]>(() => initialChanges(meal, initialItems));
   const [openWasteIds, setOpenWasteIds] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -65,15 +78,16 @@ export function MealConfirmation({ meal, state, refresh, close, complete }: Meal
     );
   }
 
-  function validationMessage(change: DraftChange, item: Item) {
+  function validationMessage(change: DraftChange, item: ConfirmationItem) {
     if (change.usedAmount === null) return 'Enter a used amount of 0 or more.';
     if (change.discardedAmount === null) return 'Enter a waste amount of 0 or more.';
     if (!Number.isFinite(change.usedAmount) || change.usedAmount < 0)
       return 'Enter a used amount of 0 or more.';
     if (!Number.isFinite(change.discardedAmount) || change.discardedAmount < 0)
       return 'Enter a waste amount of 0 or more.';
-    if (item.quantity === null || item.unit === null) return 'Set this item amount before cooking.';
-    if (change.usedAmount + change.discardedAmount > item.quantity)
+    if (item.availableQuantity === null || item.unit === null)
+      return 'Set this item amount before cooking.';
+    if (change.usedAmount + change.discardedAmount > item.availableQuantity)
       return 'Used and waste cannot exceed the available amount.';
     if (change.discardedAmount > 0 && !change.discardReason) return 'Choose a waste reason.';
     return '';
@@ -92,7 +106,7 @@ export function MealConfirmation({ meal, state, refresh, close, complete }: Meal
         throw new Error(
           'A recipe ingredient was removed. Close this meal and request fresh suggestions.',
         );
-      const available = current.filter((item): item is Item => !!item);
+      const available = confirmationItems(meal, latest);
       setItems(available);
       setChanges(initialChanges(meal, available));
       setOpenWasteIds([]);
@@ -143,7 +157,10 @@ export function MealConfirmation({ meal, state, refresh, close, complete }: Meal
       discardedAmount: change.discardedAmount ?? Number.NaN,
     }));
     try {
-      validateChanges(normalized, items);
+      validateChanges(
+        normalized,
+        items.map((item) => ({ ...item, quantity: item.availableQuantity })),
+      );
     } catch (cause) {
       setError(message(cause));
       return;
@@ -237,8 +254,16 @@ export function MealConfirmation({ meal, state, refresh, close, complete }: Meal
                       {item.name}
                     </h3>
                     <p className="helper mt-1">
-                      Available {formatQuantity(item.quantity ?? null, item.unit ?? null)}
+                      Available for this meal{' '}
+                      {formatQuantity(item.availableQuantity, item.unit ?? null)}
                     </p>
+                    {item.quantity !== null &&
+                      item.availableQuantity !== null &&
+                      item.availableQuantity < item.quantity && (
+                        <p className="helper mt-1">
+                          Left includes other members’ reserved portions.
+                        </p>
+                      )}
                   </div>
                   <p
                     className={cn(

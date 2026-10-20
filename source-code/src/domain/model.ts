@@ -90,7 +90,17 @@ export type AppState = {
   demoResetEnabled?: boolean;
   demoMealsEnabled?: boolean;
   quantityEvents?: QuantityEvent[];
+  reservations?: IngredientReservation[];
+  cookingSession?: CookingSession | null;
 };
+export type IngredientReservation = {
+  sessionId: string;
+  userId: string;
+  itemId: string;
+  amount: number;
+  expiresAt: string;
+};
+export type CookingSession = { id: string; expiresAt: string; meal: RankedMeal };
 export type QuantityEvent = {
   id: string;
   sequence?: number;
@@ -128,6 +138,7 @@ export const recipeSchema = z.object({
 });
 export type Recipe = z.infer<typeof recipeSchema>;
 export type RankedMeal = Recipe & {
+  sessionId?: string;
   score: number;
   points: number;
   totalPoints: number;

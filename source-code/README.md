@@ -112,6 +112,18 @@ concurrently. Usage history tracks requests and tokens; generation has no lifeti
 request cap. Track all AI costs against the S$10 project ceiling and pause paid
 calls before exceeding it; budget increases require team approval.
 
+## Cooking reservations
+
+`Cook this` reserves recipe portions atomically. Recorded stock stays unchanged;
+available stock excludes active reservations. Each member has one cooking session,
+restored after reload. Other members can cook with the remaining portions.
+
+Confirmation records actual use and waste, then releases unused portions. Extra
+use must fit stock left after other members' reservations. End session releases all
+portions. Reservations last two hours and renew each minute while the app is visible.
+Reset, leaving, member removal and account deletion release affected reservations.
+Stock edits, discard, deletion and undo must preserve reserved portions.
+
 ## Where code lives
 
 | Path                              | Responsibility                                               |

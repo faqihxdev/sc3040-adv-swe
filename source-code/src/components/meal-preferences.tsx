@@ -6,6 +6,7 @@ import type { AppState, MealRequest } from '@/domain/model';
 import { formatQuantity } from '@/domain/quantities';
 import { eligibleItems, todaySingapore, matchesExclusion } from '@/domain/meals';
 import { commonStaples } from '@/domain/staples';
+import { availableItems } from '@/domain/reservations';
 import { Modal } from './common';
 import { Button } from './ui/button';
 import { SelectField } from './ui/select-field';
@@ -35,7 +36,7 @@ export function MealPreferences({
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
   const formId = useId();
-  const available = eligibleItems(state.items, state.exclusions, [], todaySingapore());
+  const available = eligibleItems(availableItems(state), state.exclusions, [], todaySingapore());
   const included = available.filter((item) => !request.excludedIds.includes(item.id));
   return (
     <Modal

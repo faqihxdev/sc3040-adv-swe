@@ -69,7 +69,16 @@ begin
  assert (select count(*) from public.outcomes where household_id=hid)=outcome_before, 'Failed reset removed history';
  assert (select exclusions from public.profiles where id=uid)=array['Mushrooms'], 'Failed reset cleared owner preferences';
  assert (select exclusions from public.profiles where id=teammate)=array['Peanuts'], 'Failed reset cleared member preferences';
+ -- A reset releases active portions before replacing inventory.
+ insert into public.cooking_sessions(id,household_id,user_id,recipe,meal_data)
+   values(gen_random_uuid(),hid,uid,'{}','{}');
+ insert into public.ingredient_reservations(session_id,item_id,amount)
+   select s.id,i.id,1 from public.cooking_sessions s join public.inventory i on i.household_id=s.household_id
+   where s.user_id=uid and i.quantity>=1 and not i.deleted limit 1;
+ failed:=false; begin perform public.reset_demo(teammate,hid,version_before,items_data,outcomes_data,events_data); exception when insufficient_privilege then failed:=true; end;
+ assert failed and exists(select 1 from public.cooking_sessions where household_id=hid),'Rejected reset released active reservations';
  perform public.reset_demo(uid,hid,version_before,items_data,outcomes_data,events_data);
+ assert not exists(select 1 from public.cooking_sessions where household_id=hid),'Demo reset kept cooking reservations';
  assert (select count(*) from public.inventory where household_id=hid and not deleted)=40, 'Seed inventory count differs';
  assert not exists(
    select 1 from jsonb_to_recordset(items_data) as x(id uuid,name text,quantity numeric,unit text,expiry_date date,category text,location text)

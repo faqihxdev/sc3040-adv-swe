@@ -1,6 +1,7 @@
 import 'server-only';
 import { serverDb } from '@/lib/supabase/server';
-import type { AppState, Outcome, QuantityEvent } from '@/domain/model';
+import type { AppState, IngredientReservation, Outcome, QuantityEvent } from '@/domain/model';
+import { restoreCookingSession, type StoredCookingSession } from './cooking';
 import { AppError } from './errors';
 export { AppError } from './errors';
 export async function loadState(): Promise<AppState> {
@@ -54,7 +55,7 @@ export async function loadState(): Promise<AppState> {
       .order('created_at', { ascending: false })
       .order('sequence', { ascending: false })
       .range(offset, offset + 499);
-  const [items, members, activity, firstOutcomes, firstEvents] = await Promise.all([
+  const [items, members, activity, firstOutcomes, firstEvents, cooking] = await Promise.all([
     db.from('inventory').select('*').eq('deleted', false).order('expiry_date'),
     db.rpc('member_directory'),
     db
@@ -64,8 +65,9 @@ export async function loadState(): Promise<AppState> {
       .limit(100),
     outcomePage(0),
     eventPage(0),
+    db.rpc('cooking_state'),
   ]);
-  if (items.error || members.error || activity.error)
+  if (items.error || members.error || activity.error || cooking.error)
     throw new AppError('Could not refresh household data. Try again.', 503);
   // Paginate instead of silently truncating at the API row limit.
   if (firstOutcomes.error) throw new AppError('Could not load analytics.', 503);
@@ -84,6 +86,10 @@ export async function loadState(): Promise<AppState> {
     quantityEvents.push(...(r.data as unknown as QuantityEvent[]));
     if (r.data.length < 500) break;
   }
+  const cookingData = cooking.data as unknown as {
+    session?: StoredCookingSession;
+    reservations?: IngredientReservation[];
+  };
   return {
     ...base,
     items: items.data as unknown as AppState['items'],
@@ -91,5 +97,9 @@ export async function loadState(): Promise<AppState> {
     activity: activity.data,
     outcomes,
     quantityEvents,
+    reservations: cookingData?.reservations ?? [],
+    cookingSession: cookingData?.session
+      ? restoreCookingSession(cookingData.session, user.id, household.id)
+      : null,
   };
 }

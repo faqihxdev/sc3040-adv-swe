@@ -63,7 +63,7 @@ export function Workspace({ initialState }: { initialState: AppState }) {
     queryKey: stateKey,
     queryFn: ({ signal }) => api<AppState>('state', undefined, signal),
     initialData: initialState,
-    refetchInterval: 30000,
+    refetchInterval: (query) => (query.state.data?.reservations?.length ? 5000 : 15000),
     refetchOnWindowFocus: true,
     retry: (count, error) => !(error instanceof ApiError && error.status < 500) && count < 1,
   });
@@ -97,9 +97,7 @@ export function Workspace({ initialState }: { initialState: AppState }) {
     try {
       await refresh();
     } catch {
-      setError(
-        'Your change was saved, but the view could not refresh. Open Household and select Refresh.',
-      );
+      setError('Your change was saved. The view will refresh when the connection returns.');
       void client.invalidateQueries({ queryKey: stateKey });
     }
     return r;

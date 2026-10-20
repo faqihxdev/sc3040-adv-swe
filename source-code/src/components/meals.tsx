@@ -12,14 +12,15 @@ import {
   BookOpen,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { AppState, MealRequest, RankedMeal } from '@/domain/model';
+import type { AppState, CookingSession, MealRequest, RankedMeal } from '@/domain/model';
+import { availableItems } from '@/domain/reservations';
 import type { MealGenerationStage } from '@/domain/meal-generation';
 import type { MealGenerationResult } from '@/domain/meal-generation';
 import { formatQuantity } from '@/domain/quantities';
 import { daysUntil, eligibleItems, todaySingapore, matchesExclusion } from '@/domain/meals';
 import { commonStaples, requestStaples } from '@/domain/staples';
 import { generateMeals } from '@/lib/meal-generation';
-import { api, message } from '@/lib/api';
+import { api, ApiError, message } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { PageHeader } from './page-header';
 import { MealGenerationLoading } from './meal-generation-loading';
@@ -135,10 +136,16 @@ export function Meals({
   });
   const [stapleText, setStapleText] = useState('');
   const [meals, setMeals] = useState<RankedMeal[]>([]);
-  const [imageMeals, setImageMeals] = useState<RankedMeal[]>([]);
+  const [imageMeals, setImageMeals] = useState<RankedMeal[]>(
+    state.cookingSession ? [state.cookingSession.meal] : [],
+  );
   const { images, retry: retryImage } = useMealImages(imageMeals);
   const [detail, setDetail] = useState<RankedMeal | null>(null);
-  const [selected, setSelected] = useState<RankedMeal | null>(null);
+  const [selected, setSelected] = useState<RankedMeal | null>(state.cookingSession?.meal ?? null);
+  const [serverSessionId, setServerSessionId] = useState(state.cookingSession?.id);
+  const [endedSessionId, setEndedSessionId] = useState<string | null>(null);
+  const [sessionBusy, setSessionBusy] = useState(false);
+  const sessionFlight = useRef(false);
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [loadingSaved, setLoadingSaved] = useState(false);
@@ -155,7 +162,22 @@ export function Meals({
   const focusRequested = useRef(false);
   const submitted = useRef(false);
   const inFlight = useRef<AbortController | null>(null);
-  const available = eligibleItems(state.items, state.exclusions, [], todaySingapore());
+  const available = eligibleItems(availableItems(state), state.exclusions, [], todaySingapore());
+  // A delayed poll must not restore a session this browser has already ended.
+  const serverSession = state.cookingSession?.id === endedSessionId ? null : state.cookingSession;
+  if (serverSessionId !== serverSession?.id) {
+    setServerSessionId(serverSession?.id);
+    if (selected?.sessionId !== serverSession?.id) {
+      if (selected && !serverSession && !confirming && !sessionBusy)
+        setError('Your cooking session ended or expired. Choose a meal to reserve portions again.');
+      setSelected(serverSession?.meal ?? null);
+      setImageMeals(serverSession ? [serverSession.meal] : []);
+    }
+    if (!serverSession) {
+      setConfirming(false);
+      setDiscard(false);
+    }
+  }
   const eligible = available.filter((item) => !request.excludedIds.includes(item.id));
   const [lastPreferredId, setLastPreferredId] = useState(preferredIngredientId);
   if (lastPreferredId !== preferredIngredientId) {
@@ -177,6 +199,41 @@ export function Meals({
       focusRequested.current = false;
     }
   }, [active, preferencesOpen, selected, detail, busy]);
+  useEffect(() => {
+    if (!selected?.sessionId) return;
+    // Renew only while the app is visible. Closing it leaves a two-hour grace period.
+    let pending = false;
+    let disposed = false;
+    async function renew() {
+      if (pending || sessionFlight.current || document.visibilityState !== 'visible') return;
+      pending = true;
+      try {
+        await api('cooking', { action: 'renew', sessionId: selected!.sessionId });
+      } catch (cause) {
+        if (
+          !disposed &&
+          !sessionFlight.current &&
+          !confirming &&
+          cause instanceof ApiError &&
+          [401, 403, 409].includes(cause.status)
+        ) {
+          setSelected(null);
+          setConfirming(false);
+          setError(message(cause));
+        }
+      } finally {
+        pending = false;
+      }
+    }
+    const timer = window.setInterval(() => void renew(), 60_000);
+    const visible = () => void renew();
+    document.addEventListener('visibilitychange', visible);
+    return () => {
+      disposed = true;
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', visible);
+    };
+  }, [selected, confirming]);
 
   async function generate(event?: FormEvent<HTMLFormElement>, saved = false) {
     event?.preventDefault();
@@ -236,14 +293,57 @@ export function Meals({
     inFlight.current?.abort();
     setNotice('Generation cancelled. Your inventory is unchanged.');
   }
-  function pick(meal: RankedMeal) {
-    focusRequested.current = true;
-    setSelected(meal);
-    setMeals([]);
-    setDetail(null);
-    setGenerated(false);
-    setNotice('');
+  async function pick(meal: RankedMeal) {
+    if (sessionFlight.current) return;
+    sessionFlight.current = true;
+    setSessionBusy(true);
     setError('');
+    try {
+      const session = await api<CookingSession>('cooking', { action: 'start', token: meal.token });
+      setEndedSessionId(null);
+      focusRequested.current = true;
+      // Keep the suggestion's image request and signed ticket while adding the server session.
+      setSelected({ ...session.meal, token: meal.token });
+      setMeals([]);
+      setDetail(null);
+      setGenerated(false);
+      setNotice('');
+      try {
+        await refresh();
+      } catch {
+        setNotice('Portions reserved. Stock will refresh when the connection returns.');
+      }
+    } catch (cause) {
+      setError(message(cause));
+      void refresh().catch(() => undefined);
+    } finally {
+      sessionFlight.current = false;
+      setSessionBusy(false);
+    }
+  }
+  async function endSession() {
+    if (sessionFlight.current || !selected) return;
+    sessionFlight.current = true;
+    setSessionBusy(true);
+    setError('');
+    setImageMeals([]);
+    try {
+      await api('cooking', { action: 'cancel', sessionId: selected.sessionId });
+      setEndedSessionId(selected.sessionId ?? null);
+      try {
+        await refresh();
+      } catch {
+        setError('Session ended. Stock will refresh when the connection returns.');
+      }
+      setSelected(null);
+      setDiscard(false);
+      setNotice('Session ended. Reserved portions are available again.');
+    } catch (cause) {
+      setError(message(cause));
+    } finally {
+      sessionFlight.current = false;
+      setSessionBusy(false);
+    }
   }
   function showRecipe(meal: RankedMeal | null) {
     focusRequested.current = true;
@@ -265,6 +365,25 @@ export function Meals({
           ) : undefined
         }
       />
+      {recipe && !discard && <ErrorText error={error} />}
+      {selected && (
+        <div
+          className="flex items-center justify-between gap-3 rounded-xl bg-accent px-4 py-3 text-sm text-accent-foreground"
+          role="status"
+        >
+          <span>Portions reserved for your cooking session.</span>
+          <InfoHelp label="About reserved portions">
+            <p>
+              Other members can use the remaining stock. Confirmation records actual use and
+              releases the remainder.
+            </p>
+            <p>
+              End this session to release all portions. Reservations expire after two hours away
+              from the app.
+            </p>
+          </InfoHelp>
+        </div>
+      )}
       {savedResults && !busy && (
         <div className="flex items-center gap-1 text-xs text-muted-foreground" role="status">
           <span>Saved demo recipes</span>
@@ -320,16 +439,21 @@ export function Meals({
             <Button
               size="lg"
               className="max-sm:w-full"
+              disabled={sessionBusy}
               onClick={() => (selected ? setConfirming(true) : pick(recipe))}
             >
-              {selected ? 'I’ve finished cooking' : 'Cook this'}
+              {sessionBusy
+                ? 'Reserving portions…'
+                : selected
+                  ? 'I’ve finished cooking'
+                  : 'Cook this'}
               {selected ? <Check size={18} /> : <ChefHat size={18} />}
             </Button>
           </PageActions>
           <p className="helper">
             {selected
               ? 'Adjust actual amounts, then confirm.'
-              : 'Stock updates after you cook and confirm.'}
+              : 'Cook this reserves the recipe portions. Stock updates after confirmation.'}
           </p>
         </section>
       ) : busy && loadingSaved ? (
@@ -395,7 +519,11 @@ export function Meals({
                       <MealContext meal={meal} />
                     </div>
                     <div className="flex gap-2 px-1 pt-1 pb-1" data-meal-actions>
-                      <Button className="flex-1" onClick={() => pick(meal)}>
+                      <Button
+                        className="flex-1"
+                        disabled={sessionBusy}
+                        onClick={() => void pick(meal)}
+                      >
                         <ChefHat size={16} /> Cook this
                       </Button>
                       <Button variant="outline" className="flex-1" onClick={() => showRecipe(meal)}>
@@ -466,6 +594,7 @@ export function Meals({
           refresh={refresh}
           close={() => setConfirming(false)}
           complete={() => {
+            setEndedSessionId(selected.sessionId ?? null);
             setConfirming(false);
             setSelected(null);
             setImageMeals([]);
@@ -477,27 +606,21 @@ export function Meals({
       {discard && (
         <Modal
           title="End this cooking session?"
-          description="Your selection will be cleared. Inventory and meal history stay unchanged."
-          onClose={() => setDiscard(false)}
+          description="Reserved portions will become available again. Inventory and meal history stay unchanged."
+          onClose={() => !sessionBusy && setDiscard(false)}
           footer={
             <>
-              <Button variant="secondary" onClick={() => setDiscard(false)}>
+              <Button variant="secondary" disabled={sessionBusy} onClick={() => setDiscard(false)}>
                 Keep cooking
               </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  focusRequested.current = true;
-                  setSelected(null);
-                  setImageMeals([]);
-                  setDiscard(false);
-                }}
-              >
+              <Button variant="outline" disabled={sessionBusy} onClick={() => void endSession()}>
                 End session
               </Button>
             </>
           }
-        />
+        >
+          <ErrorText error={error} />
+        </Modal>
       )}
     </div>
   );

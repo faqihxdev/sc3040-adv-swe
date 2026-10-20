@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { AppState, Item } from '@/domain/model';
+import { reservedAmount } from '@/domain/reservations';
 import { itemInput } from '@/domain/model';
 import type {
   InventoryField,
@@ -342,6 +343,21 @@ export function Inventory({
                 key={item.id}
                 item={item}
                 highlight={highlights[item.id]}
+                reserved={reservedAmount(item.id, state.reservations)}
+                reservedBy={[
+                  ...new Set(
+                    (state.reservations ?? [])
+                      .filter(
+                        (hold) =>
+                          hold.itemId === item.id && Date.parse(hold.expiresAt) > Date.now(),
+                      )
+                      .map(
+                        (hold) =>
+                          state.members.find((member) => member.id === hold.userId)?.display_name ??
+                          'a member',
+                      ),
+                  ),
+                ].join(', ')}
                 today={today}
                 onEdit={() => openEditor(item)}
                 onRemove={() => {
@@ -478,6 +494,8 @@ export function Inventory({
 }
 function IngredientRow({
   item,
+  reserved,
+  reservedBy,
   highlight,
   today,
   onEdit,
@@ -485,6 +503,8 @@ function IngredientRow({
   onAdjust,
 }: {
   item: Item;
+  reserved: number;
+  reservedBy: string;
   highlight?: InventoryHighlight;
   today: string;
   onEdit: () => void;
@@ -554,6 +574,12 @@ function IngredientRow({
             </span>
           </span>
         </p>
+        {reserved > 0 && (
+          <p className="mt-1 text-xs leading-relaxed text-accent-foreground" data-reservation>
+            {formatQuantity(reserved, item.unit)} reserved by {reservedBy}.{' '}
+            {formatQuantity(Math.max(0, (item.quantity ?? 0) - reserved), item.unit)} available.
+          </p>
+        )}
       </div>
       <div className="hidden space-y-1.5 md:block">
         {confirmed ? (
@@ -566,7 +592,7 @@ function IngredientRow({
           </p>
         )}
         <p className="text-xs text-muted-foreground">
-          {confirmed ? 'Available' : 'Required before cooking'}
+          {confirmed ? 'In stock' : 'Required before cooking'}
         </p>
       </div>
       <div className="col-start-1 row-start-2 flex flex-wrap items-center gap-x-2 gap-y-1 md:col-start-3 md:row-start-1 md:flex-col md:items-start">

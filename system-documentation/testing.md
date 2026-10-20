@@ -3,7 +3,7 @@
 Baseline: [current SRS](https://docs.google.com/document/d/1LWbJvVtaW_9C6HRl_6uyKmaQoQkqZhZctSjvV1MEotk/edit),
 [SQAP v1.0](https://docs.google.com/document/d/1wqew1x-gv-KgmVl2rgC-CjaPcVROooq9/edit),
 the quantity/Insights requirements in [#63](https://github.com/faqihxdev/sc3040-adv-swe/issues/63),
-and cooking reservations in [#75](https://github.com/faqihxdev/sc3040-adv-swe/pull/75).
+and cooking reservations/confirmation in [#42](https://github.com/faqihxdev/sc3040-adv-swe/issues/42).
 This executable test plan covers the current implementation. Retain the required
 test plan, coverage and evidence with the Lab 5 submission.
 
@@ -33,10 +33,9 @@ execution, HTML viewers and CI artifact downloads. Commands run from `source-cod
 
 Recorded results and pending review are indexed in [GitHub #49](https://github.com/faqihxdev/sc3040-adv-swe/issues/49).
 
-The [20 October release run](https://github.com/faqihxdev/sc3040-adv-swe/actions/runs/39360777335)
-passed 218 unit tests, five SQL suites and 184 browser cases, 92 each on Chromium
-and Firefox. Both browser jobs passed local restore practice. The tested commit
-`e089cdc` has the same tree as merged and deployed `72722f4`.
+The [release record](deployment.md#release-record) identifies the tested and
+deployed builds, retained results and remaining acceptance. Final verification is
+tracked in [#51](https://github.com/faqihxdev/sc3040-adv-swe/issues/51).
 
 - PRs and pushes to `main` run fast checks, SQL and the Chromium smoke suite once per event. Smoke covers public entry, inventory CRUD/undo, photo review, cooking/analytics, household rejoining and API protection.
 - Manually select `suite: release` in App checks before production deployment. Both browser jobs must pass; each runs its mobile/desktop matrix, SQL and restore practice on a separate local Supabase.

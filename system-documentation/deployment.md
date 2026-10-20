@@ -71,8 +71,9 @@ Use `migration-list` to verify the target before a release.
 The demo is deployed. Formal acceptance, a reviewed release revision and verified
 GitLab submission remain separate checks.
 
-### Reservation deployment, 20 October 2026
+## Release record
 
+- Released: 20 October 2026.
 - Source: `72722f4`, [PR #75](https://github.com/faqihxdev/sc3040-adv-swe/pull/75).
 - Vercel deployment: `dpl_YNs2UVpd1dU2JtbAHfnKksxu6jGx`, serving the production URL.
 - Supabase migrations `202610200001_cooking_reservations.sql` and
@@ -80,8 +81,11 @@ GitLab submission remain separate checks.
 - A private pre-migration export retains roles, schema, data and migration history.
   The previous Vercel deployment remains available for compatible recovery.
 - [Release checks](https://github.com/faqihxdev/sc3040-adv-swe/actions/runs/39360777335)
-  passed on `e089cdc`, whose tree matches `72722f4`. See the
-  [reservation cases and results](testing.md#reservation-acceptance-cases).
+  passed on `e089cdc`, whose tree matches `72722f4`: 218 unit tests, five SQL
+  suites and 184 browser cases, 92 each on Chromium and Firefox. Both browser
+  jobs passed local restore practice. The artifacts are `unit-coverage`,
+  `local-release-chromium` and `local-release-firefox`. See the
+  [reservation cases](testing.md#reservation-acceptance-cases).
 - Hosted checks passed for both logins, roles, atomic holds, shared visibility,
   restored sessions, renewal, repeat-start safety, stale rejection and cancellation.
   Recorded inventory and meal history were preserved. Saved demo recipes supplied
@@ -89,6 +93,11 @@ GitLab submission remain separate checks.
 - Successful confirmation is covered by the local SQL/browser release suites.
   Hosted confirmation, live AI quality/timing and other manual acceptance remain
   separate checks.
+
+Use the linked tasks for report references: [configuration baseline](https://github.com/faqihxdev/sc3040-adv-swe/issues/47),
+[verification](https://github.com/faqihxdev/sc3040-adv-swe/issues/51) and
+[delivery](https://github.com/faqihxdev/sc3040-adv-swe/issues/52). Retain this record
+with the delivered build; record each subsequent delivery separately.
 
 ## Release checks
 

@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 390" role="img" aria-labelledby="uen-res-title uen-res-desc">
+  <title id="uen-res-title">Two cooks share one stock balance</title>
+  <desc id="uen-res-desc">With 150 grams in stock, one of two 100 gram claims succeeds and the other conflicts. Restocking 200 grams allows the second claim. Actual use must leave the other cook's 100 gram reservation intact.</desc>
+  <defs><marker id="uen-res-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#5f6368"/></marker></defs>
+  <rect x="0" y="0" width="1100" height="390" rx="16" fill="#ffffff"/>
+  <g fill="none" stroke="#5f6368" stroke-width="2" marker-end="url(#uen-res-arrow)"><path d="M250 185 H300"/><path d="M535 185 H585"/><path d="M820 185 H870"/></g>
+  <rect x="15" y="70" width="235" height="230" rx="12" fill="#f1f3f4" stroke="#d5d9dc"/>
+  <rect x="300" y="70" width="235" height="230" rx="12" fill="#fff3e6" stroke="#ebc799"/>
+  <rect x="585" y="70" width="235" height="230" rx="12" fill="#e9f0f4" stroke="#b9ccd8"/>
+  <rect x="870" y="70" width="215" height="230" rx="12" fill="#f1f3f4" stroke="#d5d9dc"/>
+  <g font-family="Arial, sans-serif" fill="#202124" text-anchor="middle">
+    <text x="132" y="112" font-size="22" font-weight="700">Starting stock</text>
+    <text x="132" y="162" font-size="32" font-weight="700">150 g</text>
+    <text x="132" y="203" font-size="18" font-weight="400">Both request 100 g</text>
+    <text x="132" y="236" font-size="17" font-weight="400">Database serializes</text>
+    <text x="132" y="262" font-size="17" font-weight="400">the two starts</text>
+    <text x="417" y="112" font-size="22" font-weight="700">One hold succeeds</text>
+    <text x="417" y="162" font-size="32" font-weight="700">50 g available</text>
+    <text x="417" y="203" font-size="18" font-weight="400">100 g reserved</text>
+    <text x="417" y="236" font-size="17" font-weight="400">Recorded stock stays 150 g</text>
+    <text x="417" y="262" font-size="17" font-weight="400">Other start returns conflict</text>
+    <text x="702" y="112" font-size="22" font-weight="700">Restock 200 g</text>
+    <text x="702" y="162" font-size="32" font-weight="700">350 g recorded</text>
+    <text x="702" y="203" font-size="18" font-weight="400">Second 100 g hold fits</text>
+    <text x="702" y="236" font-size="17" font-weight="400">200 g reserved in total</text>
+    <text x="702" y="262" font-size="17" font-weight="400">150 g available</text>
+    <text x="977" y="112" font-size="22" font-weight="700">Confirm 225 g</text>
+    <text x="977" y="162" font-size="32" font-weight="700">125 g left</text>
+    <text x="977" y="203" font-size="18" font-weight="400">Other hold keeps 100 g</text>
+    <text x="977" y="236" font-size="17" font-weight="400">A 251 g use is rejected</text>
+    <text x="977" y="262" font-size="17" font-weight="400">Retry saves no duplicate</text>
+    <text x="550" y="353" font-size="18" font-weight="400">Recorded stock - active holds = available stock</text>
+  </g>
+</svg>

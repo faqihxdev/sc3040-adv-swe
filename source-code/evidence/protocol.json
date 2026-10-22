@@ -1,0 +1,63 @@
+{
+  "id": "UEN-AI-EVAL-01",
+  "criterionChange": {
+    "record": "UEN-CR-PERF-01, task #50",
+    "targetSeconds": 45,
+    "decision": "Project owner selected 45 seconds after reviewing the retained 20-request run. Raw timings remain unchanged."
+  },
+  "scope": "Current product, real browser and provider, disposable local households",
+  "generation": {
+    "model": "gpt-6-luna",
+    "reasoning": "medium",
+    "requests": 20,
+    "maximumAttemptsPerRequest": 2
+  },
+  "timing": {
+    "start": "Immediately before submitting Next",
+    "end": "First returned recipe heading visible",
+    "targetSeconds": 45,
+    "requiredPasses": 18,
+    "failuresRemainInDenominator": true,
+    "imagesSeparate": true
+  },
+  "quality": {
+    "scenarios": 10,
+    "deterministicChecks": [
+      "schema",
+      "allowed IDs",
+      "available quantities",
+      "matching units",
+      "saved exclusions",
+      "servings",
+      "4-6 steps",
+      "score"
+    ],
+    "semanticReview": {
+      "method": "QA review of retained outputs, rubric scores and comparison references. Reviewer, completion and confirmation are recorded in review.json.",
+      "dimensions": [
+        "ingredient and method consistency",
+        "plausible proportions for servings",
+        "clear actionable instructions",
+        "fit to request within constraints"
+      ],
+      "scorePerDimension": "0 absent or contradictory, 1 usable with a minor weakness, 2 clear and plausible",
+      "scenarioPass": "At least one usable displayed meal, zero deterministic violations, and mean semantic score at least 6 of 8 with no zero in ingredient/method consistency"
+    },
+    "requiredScenarioPasses": 8,
+    "requiredDisplayedHardViolations": 0,
+    "acceptanceOwner": "See Toh Jin Jie"
+  },
+  "images": {
+    "sample": "First three recipes only",
+    "quality": "low",
+    "scope": "Completion time and illustration suitability; later recipe-timing trials suppress images"
+  },
+  "cost": {
+    "recipePricingSource": "https://developers.openai.com/api/docs/models/gpt-6-luna",
+    "standardUsdPerMillionInputTokens": 0.1,
+    "standardUsdPerMillionOutputTokens": 0.5,
+    "projectBudgetCurrency": "SGD",
+    "projectCeiling": 10,
+    "billingAcceptance": "Record actual provider usage separately from token-cost estimates"
+  }
+}

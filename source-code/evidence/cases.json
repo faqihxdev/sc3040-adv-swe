@@ -1,0 +1,277 @@
+{
+  "id": "UEN-TC-01 / UEN-TR-01",
+  "cases": [
+    {
+      "id": "TC-INV-01",
+      "title": "Measured inventory and undo",
+      "input": "150 g stock; valid and invalid amounts/dates. Add, edit, remove, then undo the latest safe edit.",
+      "expected": "Required fields and unit/decimal limits are enforced; successful changes show actor/time; undo cannot overwrite a later change.",
+      "source": "tests/quantities.test.ts; tests/core-database.sql; tests/browser/workflows.spec.ts",
+      "result": "Automated assertions passed."
+    },
+    {
+      "id": "TC-PHO-01",
+      "title": "Photo draft and atomic batch",
+      "input": "Food/non-food fixtures and a stale batch. Upload, review detected drafts, enter amount/date and save.",
+      "expected": "Detection alone saves nothing. Invalid or stale batches save nothing; successful retry-safe batch saves once. Manual entry remains available.",
+      "source": "tests/photo*.test.ts; tests/photo-batch.sql; tests/browser/workflows.spec.ts",
+      "result": "Automated assertions passed; real-camera/recognition acceptance remains."
+    },
+    {
+      "id": "TC-MEA-01",
+      "title": "Eligibility, staples and score",
+      "input": "Past/today/3/4/7/8-day stock, exclusions and selected/deselected staples. Generate and rank controlled candidates.",
+      "expected": "Ineligible references and overdraw fail; staples add no points/deductions. A 4/6 point fixture scores 66.6667%; ties follow the SRS.",
+      "source": "tests/meals.test.ts; tests/staples.test.ts; tests/recommendations.test.ts; evidence/calculations.test.ts",
+      "result": "Automated assertions and supplementary calculation passed."
+    },
+    {
+      "id": "TC-IMG-01",
+      "title": "Independent illustrations and retries",
+      "input": "Three eligible recipe tickets; transient and auth/quota image failures. Request images and retry.",
+      "expected": "Requests run concurrently; one automatic retry only for temporary failure. Images can fail while the recipe stays usable. Cache/ticket checks reject unauthorised access.",
+      "source": "tests/meal-image.test.ts; tests/meal-image-cache.sql; tests/browser/cooking-experience.spec.ts",
+      "result": "Automated assertions passed; three live sample images also succeeded."
+    },
+    {
+      "id": "TC-RES-01",
+      "title": "Competing cooks",
+      "input": "150 g and two concurrent 100 g claims. Then restock 200 g and retry the second claim.",
+      "expected": "Exactly one initial start succeeds; the other conflicts without a partial hold. Recorded 150 g remains unchanged. Restock permits both holds.",
+      "source": "tests/cooking-reservations.sql; tests/browser/cooking-reservations.spec.ts",
+      "result": "SQL and all four browser configurations passed."
+    },
+    {
+      "id": "TC-RES-02",
+      "title": "Resume and retry start",
+      "input": "One active persisted session. Reload, repeat its start and renew.",
+      "expected": "Reload restores the selection; repeated start creates no duplicate hold. Renewal requires an active permitted session.",
+      "source": "tests/cooking-route.test.ts; tests/browser/cooking-reservations.spec.ts",
+      "result": "Automated assertions passed."
+    },
+    {
+      "id": "TC-RES-03",
+      "title": "Actual use and retry safety",
+      "input": "After restock, 350 g with two 100 g holds. Try 251 g use, then 225 g. Repeat confirmation and submit a stale version.",
+      "expected": "251 g is rejected; 225 g leaves 125 g, preserving the other 100 g. Successful retry does not deduct twice; stale writes save nothing.",
+      "source": "tests/cooking-reservations.sql; tests/core-database.sql; tests/browser/cooking-reservations.spec.ts",
+      "result": "Automated assertions passed."
+    },
+    {
+      "id": "TC-RES-04",
+      "title": "Cancel and lease expiry",
+      "input": "Active and expired sessions. Close confirmation, cancel, expire and try renewal/reacquisition.",
+      "expected": "Closing the form retains holds. Cancel releases them without stock/outcome changes. Expired holds stop reducing availability; reacquisition rechecks stock.",
+      "source": "tests/reservations.test.ts; tests/cooking-reservations.sql; tests/browser/cooking-reservations.spec.ts",
+      "result": "Automated assertions passed."
+    },
+    {
+      "id": "TC-RES-05",
+      "title": "Protect held stock",
+      "input": "An active hold. Try reducing stock below it, changing identity/unit, deleting and undoing; then restock.",
+      "expected": "Destructive/conflicting changes fail without partial writes. A permitted restock succeeds.",
+      "source": "tests/cooking-reservations.sql",
+      "result": "SQL assertions passed."
+    },
+    {
+      "id": "TC-RES-06",
+      "title": "Membership and foreign access",
+      "input": "Owner, member, outsider and active sessions. Transfer, remove/leave/move/delete and call foreign or direct-client paths.",
+      "expected": "Transfer preserves sessions; affected membership cleanup releases holds. Outsider and protected direct-client writes are denied.",
+      "source": "tests/cooking-reservations.sql; tests/cooking-route.test.ts",
+      "result": "Automated assertions passed."
+    },
+    {
+      "id": "TC-CON-01",
+      "title": "Combined confirmation and refresh failure",
+      "input": "500 g, 100 g use and 25 g discard with reason. Review Left, save, then fail the next state refresh.",
+      "expected": "Left is 375 g; explicit confirmation saves stock/outcome/events together. A failed post-save refresh cannot reopen an already-saved form or deduct again.",
+      "source": "tests/browser/cooking-confirmation.spec.ts; evidence/calculations.test.ts",
+      "result": "Automated assertions passed."
+    },
+    {
+      "id": "TC-ANA-01",
+      "title": "Analytics and incomplete history",
+      "input": "g/ml quantity events, renamed snapshots, missing expiry, empty periods and Singapore day/week boundaries. Inspect charts and records.",
+      "expected": "25/125 and 50/250 each give 20%, separately by unit. Near-expiry includes days 0–3, excludes 4 and marks missing snapshots untracked. Empty history is not reported as proven zero waste.",
+      "source": "tests/analytics.test.ts; tests/expiry-insights.test.ts; tests/browser/quantity-insights.spec.ts",
+      "result": "Automated assertions passed; full readability acceptance remains."
+    },
+    {
+      "id": "TC-AUT-01",
+      "title": "Authentication and independent sessions",
+      "input": "Valid/invalid credentials and two sessions for one local account. Request recovery, sign out one session and force the other to refresh.",
+      "expected": "Invalid login fails; recovery request is handled; local sign-out preserves the other session's renewal. Standard registration and private-demo restrictions follow mode.",
+      "source": "tests/browser/signup.spec.ts; tests/browser/workflows.spec.ts; tests/browser/session-isolation.spec.ts; evidence/session-defect.test.ts",
+      "result": "Automated assertions passed; complete email recovery remains."
+    },
+    {
+      "id": "TC-ACC-01",
+      "title": "Ownership, exclusions and isolation",
+      "input": "Owner/member/outsider accounts and a valid/invalid join code. Save exclusions, join/leave, transfer and attempt forbidden owner actions.",
+      "expected": "Exclusions persist and apply to requests. Exactly one owner remains. Former owners/members cannot use revoked powers; deletion rules protect households with other members.",
+      "source": "tests/core-database.sql; tests/browser/workflows.spec.ts",
+      "result": "Automated assertions passed."
+    },
+    {
+      "id": "TC-UPD-01",
+      "title": "Shared refresh and UI states",
+      "input": "Two controlled browser contexts. Change an item; focus/poll the other, then repeat an unchanged refresh.",
+      "expected": "Changed amounts receive feedback, unchanged state stays quiet; drafts and required state transitions remain usable. Narrow layouts do not overflow.",
+      "source": "tests/shared-updates.test.ts; tests/browser/shared-updates.spec.ts; tests/browser/page-layout.spec.ts",
+      "result": "Automated assertions passed; real two-device and complete keyboard review remain."
+    },
+    {
+      "id": "TC-SEC-01",
+      "title": "Invalid routes and tickets",
+      "input": "Missing authentication, bad origin/JSON, forged/expired/wrong-user tickets and foreign household access.",
+      "expected": "Server rejects requests without authorised writes; RLS and RPC checks work independently of hidden controls.",
+      "source": "tests/meal-token.test.ts; tests/browser/workflows.spec.ts; tests/core-database.sql",
+      "result": "Automated assertions passed."
+    },
+    {
+      "id": "TC-LIV-01",
+      "title": "Live quality",
+      "input": "Ten scenario types, first retained repetition. Check deterministic constraints and score all displayed meals under the versioned semantic rubric.",
+      "expected": "At least eight scenarios pass and no displayed hard-check violation; retain failures, explanations and comparisons.",
+      "source": "evidence/protocol.json; evidence/review.json; reports/lab5-evidence/live-ai.json",
+      "result": "QA review completed by See Toh Jin Jie. Nine of ten scenarios meet the rubric; Vegetarian fails. Vegetarian and preparation-liquid findings remain open."
+    },
+    {
+      "id": "TC-LIV-02",
+      "title": "Live recipe-ready timing",
+      "input": "Twenty actual browser submissions with fixed model/configuration. End at first recipe heading; time images separately.",
+      "expected": "At least 18 display recipes within 45 s. Empty/errors count as failures and retries stay in the recorded request.",
+      "source": "evidence/live-ai.spec.ts; reports/lab5-evidence/live-ai.json",
+      "result": "18/20 meet current criterion. Recorded local conditions; hosted observation remains separate."
+    },
+    {
+      "id": "TC-REC-01",
+      "title": "Restore and release records",
+      "input": "Private local dump with an active 100 g hold. Restore into a newly named database; compare fingerprints, counts and RLS; remove only the new restore DB.",
+      "expected": "All ten table fingerprints/counts and public RLS count match. Source remains untouched; configuration/migration and evidence records identify the candidate.",
+      "source": "scripts/backup.mjs; evidence/restore-reservations.mjs; reports/lab5-evidence/restore-with-reservation.json",
+      "result": "Active-hold drill passed in 3.621 s. Hosted retention/recovery, final manifest and receipt remain."
+    },
+    {
+      "id": "TC-LOAD-01",
+      "title": "Recorded load setup",
+      "input": "Six concurrent local readers, two households, 50 items and 500 outcomes each.",
+      "expected": "State requests remain isolated and timing/environment is recorded. This does not establish large-scale hosted capacity.",
+      "source": "tests/browser/load.spec.ts; reports/load-*.json",
+      "result": "All four browser configurations passed."
+    },
+    {
+      "id": "TC-DEM-01",
+      "title": "Demo apparatus",
+      "input": "A designated demo household with seeded history and member exclusions. Reset; use saved recipes that fit current constraints.",
+      "expected": "Reset replaces only its demo data/preferences and preserves accounts/usage records. Saved recipes are labelled and revalidated. It is not production recovery.",
+      "source": "tests/demo-reset.sql; tests/demo-meals.test.ts; tests/browser/demo-meals.spec.ts",
+      "result": "Automated assertions passed. Supporting apparatus, not a main product feature."
+    }
+  ],
+  "requirements": [
+    {
+      "ids": "CON-01; CON-02; IR-02",
+      "cases": "TC-INV-01; TC-PHO-01; TC-MEA-01",
+      "status": "Amount/unit/date assertions passed. Complete field/calendar inspection remains."
+    },
+    {
+      "ids": "CON-03",
+      "cases": "TC-UPD-01; TC-RES-01 to TC-RES-04",
+      "status": "Polling and no-deduction-before-confirmation assertions passed; real two-device acceptance remains."
+    },
+    {
+      "ids": "OP-01; OR-01",
+      "cases": "TC-INV-01; TC-MEA-01; TC-CON-01; TC-UPD-01",
+      "status": "UI/help checks passed in exercised cases. Complete user-guide and score-meaning walkthrough remains."
+    },
+    {
+      "ids": "OP-02; DR-01",
+      "cases": "TC-SEC-01; TC-REC-01",
+      "status": "Configuration/ignore/lockfile inspection and build checks; fresh teammate setup/security review remains."
+    },
+    {
+      "ids": "OP-03; IR-01",
+      "cases": "TC-SEC-01; TC-ACC-01; TC-RES-06",
+      "status": "API, RLS, membership and owner checks passed."
+    },
+    {
+      "ids": "OP-04; OR-02",
+      "cases": "TC-IMG-01; TC-CON-01; TC-UPD-01",
+      "status": "Failure/retry and saved/unsaved-state assertions passed; full walkthrough remains."
+    },
+    {
+      "ids": "OP-05",
+      "cases": "TC-REC-01",
+      "status": "Non-empty reservation restore passed locally; hosted retention, access and recovery objectives remain."
+    },
+    {
+      "ids": "OP-06",
+      "cases": "TC-INV-01; TC-ACC-01; TC-CON-01",
+      "status": "Actor/history, snapshots and compensating undo assertions passed."
+    },
+    {
+      "ids": "FR-01; FR-02; IR-03",
+      "cases": "TC-MEA-01; TC-IMG-01; TC-LIV-01",
+      "status": "Controlled assertions passed. QA reviewed the ten live scenarios, with nine rubric passes. Vegetarian/liquid finding disposition remains."
+    },
+    {
+      "ids": "FR-03",
+      "cases": "TC-RES-01; TC-RES-02; TC-MEA-01",
+      "status": "Selection, all-or-none holds and reload/idempotent-start assertions passed."
+    },
+    {
+      "ids": "FR-04; FR-05",
+      "cases": "TC-INV-01; TC-PHO-01; TC-RES-05",
+      "status": "CRUD/restock/discard/undo and hold-protection assertions passed. Physical-camera recognition review remains."
+    },
+    {
+      "ids": "FR-06; FR-07; IR-04; PR-04",
+      "cases": "TC-CON-01; TC-RES-01 to TC-RES-06",
+      "status": "Atomic use/waste, stale/retry, cancellation/expiry and membership lifecycle assertions passed; complete two-device acceptance remains."
+    },
+    {
+      "ids": "FR-08; FR-09; PR-05; OR-03",
+      "cases": "TC-ANA-01; TC-UPD-01",
+      "status": "Calculations, records, boundaries and empty/untracked states passed; full chart/keyboard/readability review remains."
+    },
+    {
+      "ids": "FR-10",
+      "cases": "TC-AUT-01; TC-SEC-01",
+      "status": "Mode, sign-in/out and local recovery-request assertions passed; email confirmation and full recovery-link flow remain."
+    },
+    {
+      "ids": "FR-11; FR-12; FR-13",
+      "cases": "TC-ACC-01; TC-RES-06",
+      "status": "Exclusions, join/leave, transfer/deletion and foreign-access assertions passed."
+    },
+    {
+      "ids": "PR-01; PR-02",
+      "cases": "TC-MEA-01; TC-IMG-01; TC-SEC-01; TC-LIV-01",
+      "status": "Structural/ticket/failure checks passed. Semantic review completed with nine of ten scenario passes. Finding disposition and stronger adversarial evaluation remain."
+    },
+    {
+      "ids": "PR-03",
+      "cases": "TC-MEA-01",
+      "status": "Hand calculation, dates, zero denominator and unrounded tie assertions passed."
+    },
+    {
+      "ids": "PR-06",
+      "cases": "TC-LIV-02",
+      "status": "18/20 recipes within 45 s under retained local conditions; two empty failures retained."
+    },
+    {
+      "ids": "DR-02; DR-03",
+      "cases": "TC-REC-01",
+      "status": "Recorded CI/restore/contracts support release checks. Final tag/manifest, hosted smoke, rollback decision and delivery verification remain."
+    },
+    {
+      "ids": "SRS 5.1; 12.2",
+      "cases": "TC-LOAD-01; TC-UPD-01",
+      "status": "Six local readers and the four browser/viewport configurations passed. Physical-device and hosted-capacity limits remain."
+    }
+  ],
+  "mappedRequirementCount": 38,
+  "interpretation": "Mapping is not final acceptance. Named reviewers retain the remaining acceptance actions."
+}

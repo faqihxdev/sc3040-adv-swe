@@ -12,7 +12,7 @@ from reportlab.lib.enums import TA_LEFT
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (
-    BaseDocTemplate, Frame, PageTemplate, Paragraph, Spacer, PageBreak, Table, TableStyle,
+    BaseDocTemplate, Frame, PageTemplate, Paragraph, Spacer, PageBreak, CondPageBreak, Table, TableStyle,
 )
 
 APP = Path(__file__).resolve().parents[1]
@@ -29,7 +29,7 @@ INK, MUTED = colors.HexColor('#17212b'), colors.HexColor('#536170')
 ACCENT, PALE = colors.HexColor('#174d6b'), colors.HexColor('#f2f5f7')
 styles = {
     'title': ParagraphStyle('title', fontName='Bold', fontSize=25, leading=30, textColor=INK, spaceAfter=16),
-    'heading': ParagraphStyle('heading', fontName='Bold', fontSize=16, leading=21, textColor=INK, spaceBefore=12, spaceAfter=9, keepWithNext=True),
+    'heading': ParagraphStyle('heading', fontName='Bold', fontSize=16, leading=21, textColor=INK, spaceBefore=12, spaceAfter=9),
     'body': ParagraphStyle('body', fontName='Body', fontSize=10.5, leading=15, textColor=INK, spaceAfter=8),
     'small': ParagraphStyle('small', fontName='Body', fontSize=8.8, leading=12.3, textColor=MUTED, spaceAfter=6),
     'cell': ParagraphStyle('cell', fontName='Body', fontSize=9.3, leading=12.7, textColor=INK),
@@ -53,6 +53,8 @@ def p(text, style='body'):
 
 
 def add(text, style='body'):
+    if style == 'heading':
+        story.append(CondPageBreak(110))
     story.append(p(text, style))
 
 
@@ -74,7 +76,7 @@ def section(key, title):
     story.append(heading)
 
 
-def table(headers, rows, widths):
+def table(headers, rows, widths, padding=7):
     data = [[p(x, 'head') for x in headers]] + [[p(x, 'cell') for x in row] for row in rows]
     t = Table(data, colWidths=widths, repeatRows=1, hAlign='LEFT')
     t.setStyle(TableStyle([
@@ -82,7 +84,7 @@ def table(headers, rows, widths):
         ('BACKGROUND', (0, 0), (-1, 0), PALE),
         ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8fafb')]),
         ('LEFTPADDING', (0, 0), (-1, -1), 9), ('RIGHTPADDING', (0, 0), (-1, -1), 9),
-        ('TOPPADDING', (0, 0), (-1, -1), 7), ('BOTTOMPADDING', (0, 0), (-1, -1), 7),
+        ('TOPPADDING', (0, 0), (-1, -1), padding), ('BOTTOMPADDING', (0, 0), (-1, -1), padding),
     ]))
     story.append(t)
     story.append(Spacer(1, 12))
@@ -123,7 +125,13 @@ table(['Recorded check', 'Result', 'Scope'], [
 ], [130, 133, 248])
 add('Automated checks use controlled provider responses and local databases. The recipe evaluation uses actual provider requests. Semantic findings and final release acceptance remain separate.', 'small')
 add('Sections', 'heading')
-add('Unit assertions\nBrowser assertions and four-configuration matrix\nDatabase suites and measured coverage\nSupplementary calculations and session checks\nRecipe quality review and timings\nRecovery and reservation recording')
+for key, title in [
+    ('unit', 'Unit assertions'), ('browser', 'Browser assertions and four-configuration matrix'),
+    ('database', 'Database suites and measured coverage'), ('supplementary', 'Calculation and session checks'),
+    ('quality', 'Recipe quality review'), ('timing', 'Recipe-ready timings'),
+    ('recovery', 'Recovery data'), ('recording', 'Reservation workflow recording'),
+]:
+    story.append(Paragraph(f'<link href="#{key}" color="#174d6b"><u>{title}</u></link>', styles['body']))
 
 section('unit', 'Unit assertions')
 add('218 passed, no failed or skipped cases. Source test names are retained, including any historical naming conventions.')
@@ -213,7 +221,7 @@ source('reports/lab5-evidence/live-ai.json', 'live-ai.json')
 table(['Trial', 'Scenario', 'Repeat', 'Seconds', 'Recipes', 'Within 45 s'], [
     [str(r['trial']), r['scenario'], str(r['repetition']), f"{r['seconds']:.3f}", str(r['recipesDisplayed']),
      'Passed' if r['recipesDisplayed'] > 0 and r['seconds'] <= 45 else 'Failed'] for r in raw['runs']
-], [46, 78, 64, 94, 80, 149])
+], [46, 78, 64, 94, 80, 149], padding=5)
 add('The readable assessment derives its pass/fail values from the recorded seconds and displayed-recipe count. Source measurements and checksums are unchanged.', 'small')
 
 section('recovery', 'Recovery with an active reservation')

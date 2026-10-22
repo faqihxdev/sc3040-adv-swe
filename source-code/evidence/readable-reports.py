@@ -29,7 +29,7 @@ INK, MUTED = colors.HexColor('#17212b'), colors.HexColor('#536170')
 ACCENT, PALE = colors.HexColor('#174d6b'), colors.HexColor('#f2f5f7')
 styles = {
     'title': ParagraphStyle('title', fontName='Bold', fontSize=25, leading=30, textColor=INK, spaceAfter=16),
-    'heading': ParagraphStyle('heading', fontName='Bold', fontSize=16, leading=21, textColor=INK, spaceBefore=12, spaceAfter=9),
+    'heading': ParagraphStyle('heading', fontName='Bold', fontSize=16, leading=21, textColor=INK, spaceBefore=12, spaceAfter=9, keepWithNext=True),
     'body': ParagraphStyle('body', fontName='Body', fontSize=10.5, leading=15, textColor=INK, spaceAfter=8),
     'small': ParagraphStyle('small', fontName='Body', fontSize=8.8, leading=12.3, textColor=MUTED, spaceAfter=6),
     'cell': ParagraphStyle('cell', fontName='Body', fontSize=9.3, leading=12.7, textColor=INK),
@@ -238,6 +238,7 @@ if accepted:
     record = json.loads(accepted[0].read_text(encoding='utf-8'))
     add('Case: ' + record['case'] + '. Result: ' + record['result'] + '.')
     add(record['scope'])
+    story.append(Paragraph('<link href="https://drive.google.com/file/d/1VtzOyYywgjpIBiNLti3n6hBOYiAlsTgd/view" color="#174d6b"><u>Reservation workflow recording</u></link>', styles['small']))
     table(['Visible action', 'Checked result'], [
         ['Cook this', '100 g held. Recorded stock stays at 500 g.'],
         ['Open Inventory', '100 g reserved, 400 g available.'],

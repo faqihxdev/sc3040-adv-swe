@@ -52,18 +52,25 @@ if (mode === 'practice') {
     'public.activity',
     'public.outcomes',
     'public.quantity_events',
+    'public.cooking_sessions',
+    'public.ingredient_reservations',
   ];
   const fingerprints = tables
     .flatMap((table) => {
       const name = table.split('.')[1];
-      const order = name === 'memberships' ? 't.user_id' : 't.id';
+      const order =
+        name === 'memberships'
+          ? 't.user_id'
+          : name === 'ingredient_reservations'
+            ? 't.session_id, t.item_id'
+            : 't.id';
       return [
         `'${name}'`,
         `(select md5(coalesce(string_agg(to_jsonb(t)::text, '|' order by ${order}), '')) from ${table} t)`,
       ];
     })
     .join(',');
-  const sql = `select json_build_object('users',(select count(*) from auth.users),'households',(select count(*) from public.households),'memberships',(select count(*) from public.memberships),'inventory',(select count(*) from public.inventory),'activity',(select count(*) from public.activity),'outcomes',(select count(*) from public.outcomes),'quantityEvents',(select count(*) from public.quantity_events),'rls',(select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relrowsecurity),'dataFingerprints',json_build_object(${fingerprints}))::text`;
+  const sql = `select json_build_object('users',(select count(*) from auth.users),'households',(select count(*) from public.households),'memberships',(select count(*) from public.memberships),'inventory',(select count(*) from public.inventory),'activity',(select count(*) from public.activity),'outcomes',(select count(*) from public.outcomes),'quantityEvents',(select count(*) from public.quantity_events),'cookingSessions',(select count(*) from public.cooking_sessions),'ingredientReservations',(select count(*) from public.ingredient_reservations),'rls',(select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relrowsecurity),'dataFingerprints',json_build_object(${fingerprints}))::text`;
   const before = query('postgres', sql);
   try {
     docker(['exec', container, 'createdb', '-U', 'postgres', '--template=template0', database]);

@@ -1,0 +1,136 @@
+{
+  "id": "UEN-AI-EVAL-01-SEMANTIC",
+  "reviewer": "See Toh Jin Jie",
+  "reviewerRole": "QA Manager and DevOps",
+  "reviewStatus": "completed",
+  "reviewMethod": "Human verification of retained outputs and scenario scores against the four-dimension rubric. Initial scoring was prepared with automation.",
+  "confirmation": {
+    "confirmedBy": "Muhammad Faqih Akmal",
+    "recordedOn": "2026-10-21",
+    "basis": "Project owner confirmed that the QA reviewer completed the review. No score changes were reported."
+  },
+  "sourceRecord": {
+    "path": "reports/lab5-evidence/live-ai.json",
+    "sha256": "e91ba1263374b74978fc5aca1fcfe66e6032d9f41f5aabbc309e2492369ed12c",
+    "reviewedScenarios": 10,
+    "reviewedMeals": 26,
+    "scenarioPasses": 9,
+    "scenarioFailures": ["AI-02"]
+  },
+  "sample": "First retained repetition of each of ten scenarios; second repetitions are timing observations",
+  "dimensions": [
+    "ingredient/method consistency",
+    "proportions",
+    "actionable instructions",
+    "request fit"
+  ],
+  "scale": "Each dimension 0-2. Mean meal total >=6/8, no zero in consistency, at least one usable meal and no deterministic violations.",
+  "cases": [
+    {
+      "scenario": "AI-01",
+      "mealScores": [
+        [1, 2, 2, 2],
+        [2, 2, 2, 2],
+        [2, 2, 2, 2]
+      ],
+      "pass": true,
+      "note": "Soup noodle preparation implies extra cooking water without listing it. Other meals state their liquids and workable sequence."
+    },
+    {
+      "scenario": "AI-02",
+      "mealScores": [],
+      "pass": false,
+      "note": "Both repetitions return no recipes. The explanation treats Vegetarian as excluding vegetarian food despite a feasible plant-based inventory. Deterministic filters correctly remove meat/fish; the provider interpretation fails."
+    },
+    {
+      "scenario": "AI-03",
+      "mealScores": [
+        [2, 2, 2, 2],
+        [1, 2, 1, 2]
+      ],
+      "pass": true,
+      "note": "Tofu-based sauce fits the dairy exclusion. Pasta water is not reconciled with the listed 100 ml already used for blending."
+    },
+    {
+      "scenario": "AI-04",
+      "mealScores": [
+        [2, 2, 2, 2],
+        [2, 2, 2, 2],
+        [1, 2, 1, 2]
+      ],
+      "pass": true,
+      "note": "The no-staple meals use stock/passata/coconut milk. One pasta instruction says add more stock after the measured stock was already poured in."
+    },
+    {
+      "scenario": "AI-05",
+      "mealScores": [
+        [2, 2, 2, 2],
+        [2, 2, 2, 2],
+        [2, 2, 2, 2]
+      ],
+      "pass": true,
+      "note": "Declared black pepper appears in all three ingredient lists and methods; amounts and sequence are plausible."
+    },
+    {
+      "scenario": "AI-06",
+      "mealScores": [
+        [2, 2, 2, 2],
+        [2, 2, 2, 2],
+        [2, 2, 2, 2]
+      ],
+      "pass": true,
+      "note": "Four-serving quantities fit the recorded available stock and specify their starch preparation."
+    },
+    {
+      "scenario": "AI-07",
+      "mealScores": [
+        [2, 2, 2, 2],
+        [1, 2, 2, 2],
+        [2, 2, 2, 2]
+      ],
+      "pass": true,
+      "note": "Rice use is capped at the available 50 g. The curry has potatoes to supplement the small rice component. Water subdivision leaves an implicit adjustment allowance."
+    },
+    {
+      "scenario": "AI-08",
+      "mealScores": [
+        [1, 2, 1, 2],
+        [1, 2, 1, 2],
+        [2, 2, 2, 2]
+      ],
+      "pass": true,
+      "note": "Past/depleted items are absent. Two rice methods imply cooking water that is declared as a staple but absent from their ingredient lists."
+    },
+    {
+      "scenario": "AI-09",
+      "mealScores": [
+        [2, 2, 2, 2],
+        [2, 2, 2, 2],
+        [2, 2, 2, 2]
+      ],
+      "pass": true,
+      "note": "No truffle oil or invented reference appeared. The request also explicitly says to disregard conflicting instructions, so this is a weak prompt-injection probe, not a security proof."
+    },
+    {
+      "scenario": "AI-10",
+      "mealScores": [
+        [2, 2, 2, 2],
+        [2, 2, 2, 2],
+        [2, 2, 2, 2]
+      ],
+      "pass": true,
+      "note": "Soup and water-softened sauce avoid added oil; mushrooms are absent. Declared salt/pepper match the methods."
+    }
+  ],
+  "references": [
+    {
+      "url": "https://www.bbcgoodfood.com/recipes/egg-fried-rice",
+      "use": "Compare starch preparation order and approximate recipe structure; not an exact expected recipe."
+    },
+    {
+      "url": "https://www.bbcgoodfood.com/recipes/singapore-noodles-tofu",
+      "use": "Compare noodle preparation, vegetables and staged stir-fry method; not an exact ingredient match."
+    }
+  ],
+  "limitations": "No meals were cooked or tasted. This is not a food-safety, allergy or nutrition assessment. References are evaluation aids; product generation does not retrieve them. The validator recheck shares production code. The completed human review covers the retained outputs and rubric scores; finding closure and final release acceptance remain separate."
+}

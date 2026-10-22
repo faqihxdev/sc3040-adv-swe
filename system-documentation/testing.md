@@ -105,17 +105,32 @@ Mixed methods mean **partial verification**, not full acceptance.
 | FR-11, FR-12, FR-13; IR-01; OP-03   | A: exclusions, join/leave/transfer, ownership restrictions, typed deletions, foreign-household RLS and API validation.                                                                                      |
 | PR-01, PR-02                        | A: schema/ID/unit/amount/exclusion filters, bounded recipe retry and authorised image-cache operations. M: live prompt-injection and ingredient-alias scenarios.                                            |
 | PR-03                               | A: hand-calculated points, denominator, zero-eligible case and unrounded tie-breaking.                                                                                                                      |
-| PR-06                               | M: 20 live recipe-ready timings; at least 18 within 15 seconds. Record failures/retries and image completion separately.                                                                                    |
+| PR-06                               | M: 20 live recipe-ready timings; at least 18 within 45 seconds. Empty/error responses count as failures. Retain failures/retries, conditions and separate image timings; task #50 records the criterion and results. |
 | OP-01, OP-04                        | A: failure preserves preferences, drafts and saved state. I/M: user guide, recovery instructions and walkthrough.                                                                                           |
 | OP-02; DR-01                        | I: env ignore/redaction, lockfile, CLI/config/migrations/seed. A: clean build and local CI setup. M: fresh teammate setup/security review.                                                                  |
 | OP-05                               | A: separate local restore/count/RLS drill. M: hosted backup, four-copy retention, restricted access, seven-day loss / one-working-day recovery objectives.                                                  |
 | OP-06                               | A: actor/history snapshots and compensating undo in core SQL. I: displayed actor/time.                                                                                                                      |
 | DR-02, DR-03                        | I/M: source/config/applied-migration baseline, live release smoke and compatible rollback; see deployment runbook.                                                                                          |
 
+## Presentation evidence
+
+The [shared evidence guide](https://docs.google.com/document/d/1HBv_5AizXnKLDUOJGO6SrJVq7hftJpdymYUBKRt6TWY/edit)
+contains the master test plan, 21 acceptance-case groups, a native table mapping
+all 38 numbered SRS requirements, and primary/backup presentation examples.
+Mapped coverage is not final acceptance.
+
+`source-code/evidence` contains supplementary calculation/session checks, the
+explicitly gated paid evaluation, semantic inspection, active-reservation restore
+check and archive builder. Raw results and the original timing assessment are
+retained. Task #50 records the current 45-second criterion. The retained local
+run meets it at 18/20; two Vegetarian empty results remain failures. See Toh Jin
+Jie completed the semantic review with nine of ten scenario passes. Vegetarian
+and instruction findings remain open.
+
 ## Outstanding acceptance / course evidence
 
-- Q-05: JJ's 10 live AI scenarios; at least 8 pass and zero hard violations.
-- Q-06 / PR-06: 20 live submission-to-recipe-result timings, including failures/retries. Record image completion separately.
+- Q-05: See Toh Jin Jie completed the ten-scenario review, with nine rubric passes and zero displayed hard-check violations. Disposition the Vegetarian and preparation-liquid findings under #70.
+- Q-06 / PR-06: retain the 20 live timings, 18/20 current-criterion result and separate three-image sample. Review the recorded local conditions before claiming hosted performance.
 - Supplementary layout checks use Pixel 8 and Laptop L. Record each case's actual viewport, including overrides.
 - Browser matrix: Chromium and Firefox at 360×800 and 1366×768, matching SRS §12.2. Record exact versions and OS in `reports/browser-*.json`. These are Playwright test builds. Chromium emulates mobile/touch; Firefox checks layout at that width only.
 - SRS §5.1: `browser/load.spec.ts` checks six concurrent local state reads, two households, 50 items and 500 outcomes each; `reports/load-*.json` records timing and isolation. Hosted capacity, physical camera/file capture and complete email flows remain manual.

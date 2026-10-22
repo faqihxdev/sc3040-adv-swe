@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 480" role="img" aria-labelledby="uen-arch-title uen-arch-desc">
+  <title id="uen-arch-title">UseEatNow responsibility boundaries</title>
+  <desc id="uen-arch-desc">The browser calls authenticated Next.js services. Services call pure domain rules, the AI provider and Supabase. AI proposes data. PostgreSQL enforces household access and atomic writes.</desc>
+  <defs><marker id="uen-arch-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#5f6368"/></marker></defs>
+  <rect x="0" y="0" width="1080" height="480" rx="16" fill="#ffffff"/>
+  <g fill="none" stroke="#5f6368" stroke-width="2" marker-end="url(#uen-arch-arrow)">
+    <path d="M240 240 H350"/>
+    <path d="M630 195 H700 V96 H785"/>
+    <path d="M630 240 H785"/>
+    <path d="M630 285 H700 V384 H785"/>
+  </g>
+  <rect x="30" y="170" width="210" height="140" rx="12" fill="#f1f3f4" stroke="#d5d9dc"/>
+  <rect x="350" y="150" width="280" height="180" rx="12" fill="#e9f0f4" stroke="#b9ccd8"/>
+  <rect x="785" y="40" width="265" height="112" rx="12" fill="#fff3e6" stroke="#ebc799"/>
+  <rect x="785" y="184" width="265" height="112" rx="12" fill="#f1f3f4" stroke="#d5d9dc"/>
+  <rect x="785" y="328" width="265" height="112" rx="12" fill="#e9f0f4" stroke="#b9ccd8"/>
+  <g font-family="Arial, sans-serif" fill="#202124">
+    <text x="135" y="215" text-anchor="middle" font-size="24" font-weight="700">Browser UI</text>
+    <text x="135" y="249" text-anchor="middle" font-size="18" font-weight="400">Forms and charts</text>
+    <text x="135" y="277" text-anchor="middle" font-size="18" font-weight="400">Saved-state refresh</text>
+    <text x="295" y="222" text-anchor="middle" font-size="16" font-weight="400">HTTPS</text>
+    <text x="490" y="197" text-anchor="middle" font-size="24" font-weight="700">Next.js services</text>
+    <text x="490" y="232" text-anchor="middle" font-size="18" font-weight="400">Authenticate and validate</text>
+    <text x="490" y="261" text-anchor="middle" font-size="18" font-weight="400">Orchestrate provider calls</text>
+    <text x="490" y="290" text-anchor="middle" font-size="18" font-weight="400">Sign recipe tickets</text>
+    <text x="917" y="77" text-anchor="middle" font-size="22" font-weight="700">Pure domain rules</text>
+    <text x="917" y="108" text-anchor="middle" font-size="17" font-weight="400">Amounts, exclusions, scoring</text>
+    <text x="917" y="133" text-anchor="middle" font-size="17" font-weight="400">No provider or database I/O</text>
+    <text x="917" y="222" text-anchor="middle" font-size="22" font-weight="700">AI provider</text>
+    <text x="917" y="254" text-anchor="middle" font-size="17" font-weight="400">Proposes recipes and images</text>
+    <text x="917" y="279" text-anchor="middle" font-size="17" font-weight="400">No stock-write tool</text>
+    <text x="917" y="366" text-anchor="middle" font-size="22" font-weight="700">Supabase</text>
+    <text x="917" y="398" text-anchor="middle" font-size="17" font-weight="400">Auth, RLS and PostgreSQL</text>
+    <text x="917" y="423" text-anchor="middle" font-size="17" font-weight="400">Atomic holds and stock writes</text>
+  </g>
+</svg>

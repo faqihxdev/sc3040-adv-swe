@@ -71,6 +71,17 @@ for (const [email, password] of [
   const state = await stateResponse.json();
   assert.equal(state.demoResetEnabled, email.startsWith('alex'));
   assert.equal(state.household.id, process.env.DEMO_HOUSEHOLD_ID);
+  if (email.startsWith('alex')) {
+    for (const requestOrigin of [origin, 'https://invalid-origin.example']) {
+      const invalid = await fetch(`${origin}/api/actions`, {
+        method: 'POST',
+        headers: { cookie, origin: requestOrigin, 'content-type': 'application/json' },
+        body: '{', // Invalid JSON cannot execute a stock mutation.
+      });
+      assert.equal(invalid.status, requestOrigin === origin ? 400 : 403);
+    }
+    console.log('Canonical origin accepted; foreign origin rejected without data writes.');
+  }
   if (email.startsWith('sam')) {
     const reset = await fetch(`${origin}/api/demo/reset`, {
       method: 'POST',

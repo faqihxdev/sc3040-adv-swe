@@ -20,7 +20,7 @@ Mapped requirements still require reviewer acceptance.
 
 ## Execution and evidence
 
-Follow [Run and view tests](../README.md#run-and-view-tests) for setup,
+Follow [Run and view tests](development.md#run-and-view-tests) for setup,
 execution, HTML viewers and CI artifact downloads. Commands run from the application root.
 
 | Command                    | Evidence / scope                                                                                                                                                           |

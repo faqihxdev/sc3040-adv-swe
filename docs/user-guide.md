@@ -1,7 +1,7 @@
 # UseEatNow quick guide
 
 Private demo: use the accounts shared by the team. Local accounts/setup are in
-the [app README](../README.md).
+the [development guide](development.md).
 
 ## UC1: Find meals
 

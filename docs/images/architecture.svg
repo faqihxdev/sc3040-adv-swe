@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="820" viewBox="0 0 1200 820" role="img" aria-labelledby="title description">
+  <title id="title">UseEatNow architecture</title>
+  <desc id="description">The browser uses Supabase Auth for sign-in and sends HTTPS requests to Next.js on Vercel. API routes and server services authenticate requests, call OpenAI and validate proposed data through pure domain rules. Server services use PostgreSQL row-level security and atomic operations for exact quantities, cooking reservations and recorded outcomes. The AI has no database tools.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M1 1 L9 5 L1 9" fill="none" stroke="#ff9a3c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <style>
+      text { font-family: 'Segoe UI', Arial, sans-serif; }
+      .name { fill: #f5f5f5; font-size: 23px; font-weight: 600; }
+      .detail { fill: #d3d3d3; font-size: 18px; }
+      .caption { fill: #b9b9b9; font-size: 17px; }
+      .node { fill: #202020; }
+      .accent { fill: #382719; }
+      .edge { fill: none; stroke: #ff9a3c; stroke-width: 2; stroke-linejoin: round; marker-end: url(#arrow); }
+      .both { marker-start: url(#arrow); }
+    </style>
+  </defs>
+  <rect width="1200" height="820" rx="20" fill="#0d0d0d"/>
+  <text x="32" y="42" fill="#f5f5f5" font-size="28" font-weight="600">UseEatNow architecture</text>
+
+  <rect class="node" x="32" y="76" width="650" height="120" rx="14"/>
+  <text class="name" x="56" y="112">Browser UI</text>
+  <text class="detail" x="56" y="145">React · TypeScript · Tailwind · TanStack Query</text>
+  <text class="caption" x="56" y="174">Inventory · cooking · household · waste insights</text>
+
+  <rect class="node" x="792" y="76" width="376" height="120" rx="14"/>
+  <text class="name" x="816" y="112">Supabase Auth</text>
+  <text class="detail" x="816" y="145">Email/password sessions</text>
+  <text class="caption" x="816" y="174">Identity and session refresh</text>
+  <path class="edge both" d="M682 136 H792"/>
+  <text class="caption" x="706" y="119">Sign-in</text>
+
+  <rect x="32" y="260" width="650" height="328" rx="18" fill="#141414"/>
+  <text class="name" x="56" y="295">Next.js on Vercel</text>
+  <rect class="accent" x="56" y="318" width="602" height="94" rx="12"/>
+  <text class="name" x="80" y="352">API routes + server services</text>
+  <text class="detail" x="80" y="384">Authentication · input checks · signed meal tickets</text>
+  <rect class="node" x="56" y="454" width="602" height="94" rx="12"/>
+  <text class="name" x="80" y="488">Pure domain rules</text>
+  <text class="detail" x="80" y="520">Eligibility · exclusions · expiry ranking · quantities</text>
+  <text class="caption" x="56" y="574">Rules stay independent of network and database access.</text>
+  <path class="edge" d="M540 196 V318"/>
+  <text class="caption" x="554" y="236">HTTPS</text>
+  <path class="edge" d="M358 412 V454"/>
+  <text class="caption" x="378" y="440">Validate + rank</text>
+
+  <rect class="accent" x="792" y="318" width="376" height="148" rx="14"/>
+  <text class="name" x="816" y="354">OpenAI</text>
+  <text class="detail" x="816" y="387">Structured recipes + photo drafts</text>
+  <text class="caption" x="816" y="420">Server validates proposed data.</text>
+  <text class="caption" x="816" y="446">No database tools.</text>
+  <path class="edge both" d="M658 365 H792"/>
+
+  <rect class="node" x="32" y="650" width="650" height="136" rx="14"/>
+  <text class="name" x="56" y="686">PostgreSQL on Supabase</text>
+  <text class="detail" x="56" y="720">Household RLS · exact stock · cooking reservations</text>
+  <text class="caption" x="56" y="752">Atomic updates · retry-safe confirmation · event history</text>
+  <path class="edge both" d="M658 396 H728 V718 H682"/>
+  <text class="caption" x="750" y="557">SQL / RPC</text>
+  <text class="caption" x="750" y="584">Membership checks</text>
+  <text class="caption" x="750" y="611">Stock and retry guards</text>
+
+  <text class="detail" x="792" y="706">AI proposes. Code validates.</text>
+  <text class="detail" x="792" y="738">The database protects shared stock.</text>
+</svg>

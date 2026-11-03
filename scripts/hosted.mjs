@@ -83,7 +83,7 @@ if (command === 'create') {
   config.DEMO_ALEX_PASSWORD ||= randomBytes(24).toString('base64url');
   config.DEMO_SAM_PASSWORD ||= randomBytes(24).toString('base64url');
   config.MEAL_SIGNING_SECRET ||= randomBytes(32).toString('hex');
-  config.APP_ORIGIN ||= `https://${projectName}.vercel.app`;
+  config.APP_ORIGIN ||= 'https://useitnow.utf.sh';
   config.AUTH_CALLBACK_URL = `${config.APP_ORIGIN}/auth/callback`;
   config.AUTH_RECOVERY_URL = `${config.APP_ORIGIN}/auth/callback?next=/reset-password`;
   config.AI_ENABLED = 'true';
@@ -133,10 +133,15 @@ if (command === 'create') {
   const origin = new URL(process.argv[3]);
   if (
     origin.protocol !== 'https:' ||
-    !origin.hostname.endsWith('.vercel.app') ||
-    origin.pathname !== '/'
+    (!origin.hostname.endsWith('.vercel.app') && origin.hostname !== 'useitnow.utf.sh') ||
+    origin.pathname !== '/' ||
+    origin.port ||
+    origin.username ||
+    origin.password ||
+    origin.search ||
+    origin.hash
   )
-    throw new Error('Use the exact HTTPS Vercel deployment origin.');
+    throw new Error('Use the exact HTTPS demo origin: useitnow.utf.sh or a Vercel deployment.');
   config.APP_ORIGIN = origin.origin;
   config.AUTH_CALLBACK_URL = `${origin.origin}/auth/callback`;
   config.AUTH_RECOVERY_URL = `${origin.origin}/auth/callback?next=/reset-password`;

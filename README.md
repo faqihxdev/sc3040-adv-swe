@@ -1,5 +1,7 @@
 # UseEatNow
 
+[![UseEatNow landing page with ingredient-based recipe suggestions and a gallery of meals.](docs/images/landing.png)](https://useitnow.utf.sh)
+
 A team project for NTU SC3040 Advanced Software Engineering, focused on project management
 and software delivery: planning, change control, risk, quality assurance and release coordination.
 
@@ -35,6 +37,11 @@ and [deployment and recovery](docs/deployment.md) for details.
 
 Use `<name>/<type>-<description>` branches and `<type>: <description>` commits and PR titles.
 See the [development workflow](docs/development.md#contributing) for setup, checks and code conventions.
+
+## Team
+
+Muhammad Faqih Akmal · Phang Wei Zhang · See Toh Jin Jie · Gladys Woo Hui Min ·
+Chin Shao Yang · Eileen Lim Jing Wen.
 
 ## Project records
 

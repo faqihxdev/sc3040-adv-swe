@@ -195,79 +195,6 @@
     background: var(--card);
     scroll-margin-top: 1rem;
   }
-  .landing-page {
-    display: flex;
-    flex-direction: column;
-    min-height: 100dvh;
-    padding: 1rem;
-  }
-  .landing-header,
-  .landing-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    width: 100%;
-    max-width: 72rem;
-    margin-inline: auto;
-  }
-  .landing-main {
-    display: grid;
-    align-items: center;
-    gap: 3rem;
-    flex: 1;
-    width: 100%;
-    max-width: 72rem;
-    margin-inline: auto;
-    padding-block: 3.5rem;
-  }
-  .landing-story {
-    min-width: 0;
-  }
-  .landing-headline {
-    max-width: 15ch;
-    font-size: clamp(2.75rem, 7vw, 4.75rem);
-    font-weight: 800;
-    line-height: 1.08;
-    text-wrap: balance;
-    overflow-wrap: normal;
-  }
-  .landing-intro {
-    max-width: 38ch;
-    margin-top: 1.5rem;
-    color: var(--muted-foreground);
-    font-size: 1rem;
-    line-height: 1.7;
-  }
-  .landing-preview {
-    min-width: 0;
-    border: 1px solid var(--border);
-    border-radius: 1.5rem;
-    padding: 1.5rem;
-    background: var(--card);
-  }
-  .landing-pantry {
-    margin-block: 1.25rem;
-  }
-  .landing-pantry li {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    min-height: 3.5rem;
-    border-bottom: 1px solid var(--border);
-  }
-  .landing-meal {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    border-radius: 0.75rem;
-    padding: 1rem;
-    background: var(--accent);
-  }
-  .landing-footer {
-    flex-wrap: wrap;
-    padding-bottom: env(safe-area-inset-bottom);
-  }
   @media (min-width: 640px) {
     .auth-page {
       padding: 1.5rem;
@@ -275,27 +202,10 @@
     .auth-panel {
       padding: 2rem;
     }
-    .landing-page {
-      padding: 1.5rem;
-    }
-    .landing-preview {
-      padding: 2rem;
-    }
   }
   @media (min-width: 1024px) {
     .auth-page {
       padding: 2rem 3rem;
-    }
-    .landing-page {
-      padding: 2rem 3rem;
-    }
-    .landing-main {
-      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-      gap: clamp(3rem, 6vw, 6rem);
-      padding-block: 4rem;
-    }
-    .landing-intro {
-      font-size: 1.0625rem;
     }
   }
   .page-header {

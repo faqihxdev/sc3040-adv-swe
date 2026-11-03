@@ -14,17 +14,9 @@ export function Brand() {
   return (
     <span className="inline-flex items-center gap-2.5 font-extrabold tracking-tight text-xl">
       <svg className="size-9 shrink-0" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
-        <rect width="64" height="64" rx="20" fill="var(--primary)" />
-        <g
-          fill="none"
-          stroke="var(--primary-foreground)"
-          strokeWidth="4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M14 32h36c-1 12-8 19-18 19s-17-7-18-19Z" />
-          <path d="M12 32h40M24 51h16" />
-          <path d="M22 22c-6-5 6-7 0-12M32 22c-6-5 6-7 0-12M42 22c-6-5 6-7 0-12" />
+        <g fill="var(--primary)">
+          <rect x="11" y="18" width="42" height="6" rx="3" />
+          <path d="M11 29H53C52 43 44 52 32 52S12 43 11 29Z" />
         </g>
       </svg>
       UseEatNow

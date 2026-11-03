@@ -24,14 +24,14 @@ describe('authentication presentation', () => {
     expect(html).toContain('Forgot password?');
   });
 
-  it('shows an image-free public overview without credentials or private data', () => {
+  it('shows a public meal example without credentials or private data', () => {
     const html = renderToStaticMarkup(createElement(Landing));
     expect(html).toContain('Cook with what you have.');
     expect(html).toContain('aria-labelledby="landing-title"');
-    expect(html).toContain('An example kitchen');
+    expect(html).toContain('aria-label="Meal ideas"');
     expect(html).toContain('href="/login"');
     expect(html).not.toContain('<input');
-    expect(html).not.toContain('<img');
+    expect(html).toContain('<img');
   });
 
   it('keeps registration and recovery controls out of private-demo login', () => {

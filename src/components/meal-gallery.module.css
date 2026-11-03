@@ -1,0 +1,178 @@
+.gallery {
+  grid-area: gallery;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  outline-offset: -3px;
+}
+.gallery:focus-visible {
+  outline: 2px solid var(--ring);
+  border-radius: 20px;
+}
+.window {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: minmax(0, 1fr);
+  gap: 20px;
+  height: 100%;
+  min-height: 0;
+  overflow: clip;
+  mask-image: linear-gradient(to bottom, transparent, black 7%, black 93%, transparent);
+}
+.column {
+  min-width: 0;
+  min-height: 0;
+}
+.track {
+  animation: vertical-drift 48s linear infinite;
+  will-change: transform;
+}
+.column:nth-child(2) .track {
+  animation-duration: 56s;
+  animation-direction: reverse;
+  animation-delay: -16s;
+}
+.group {
+  display: grid;
+  gap: 20px;
+  padding-bottom: 20px;
+}
+.card {
+  position: relative;
+  min-width: 0;
+  aspect-ratio: 4 / 5;
+  border-radius: 20px;
+  isolation: isolate;
+}
+.surface {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  border-radius: inherit;
+  background: #202020;
+  transition:
+    transform 280ms ease,
+    box-shadow 280ms ease;
+}
+.photo {
+  object-fit: cover;
+  transition:
+    transform 500ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    filter 350ms ease;
+}
+.cardText {
+  position: absolute;
+  inset: auto 0 0;
+  padding: 54px 18px 18px;
+  background: linear-gradient(transparent, rgb(0 0 0 / 0.82));
+  color: #fff;
+}
+.mealName {
+  font-size: clamp(15px, 1.35vw, 20px);
+  font-weight: 650;
+  letter-spacing: -0.025em;
+}
+.ingredients {
+  margin-top: 4px;
+  color: #e2e2e2;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.gallery:hover .track,
+.gallery:focus-within .track {
+  animation-play-state: paused;
+}
+@media (hover: hover) and (pointer: fine) {
+  .card:hover {
+    z-index: 2;
+  }
+  .card:hover .surface {
+    transform: perspective(900px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg))
+      translateY(-4px);
+    box-shadow: 0 24px 46px rgb(0 0 0 / 0.28);
+  }
+  .card:hover .photo {
+    transform: scale(1.07) translate(var(--pan-x, 0px), var(--pan-y, 0px));
+    filter: brightness(1.06);
+  }
+}
+@keyframes vertical-drift {
+  to {
+    transform: translateY(-25%);
+  }
+}
+@media (max-width: 759px) {
+  .window {
+    gap: 12px;
+  }
+  .group {
+    gap: 12px;
+    padding-bottom: 12px;
+  }
+  .card {
+    border-radius: 14px;
+  }
+  .cardText {
+    padding: 40px 11px 12px;
+  }
+  .mealName {
+    font-size: 14px;
+  }
+  .ingredients {
+    font-size: 10px;
+  }
+}
+@media (min-width: 500px) and (max-height: 620px) {
+  .window {
+    display: grid;
+    gap: 12px;
+  }
+  .card {
+    width: auto;
+    height: auto;
+    aspect-ratio: 4 / 5;
+  }
+  .group {
+    gap: 12px;
+    padding-bottom: 12px;
+  }
+  .mealName {
+    font-size: 12px;
+  }
+  .ingredients {
+    display: none;
+  }
+}
+@media (max-width: 499px) and (max-height: 480px) {
+  .gallery {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .track {
+    animation: none !important;
+    will-change: auto;
+  }
+  .surface,
+  .photo {
+    transform: none !important;
+    transition: none;
+  }
+  .track {
+    height: 100%;
+  }
+  .group {
+    height: 100%;
+    padding-bottom: 0;
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+  }
+  .group:not(:first-child) {
+    display: none;
+  }
+  .window {
+    mask-image: none;
+  }
+  .window .card {
+    aspect-ratio: auto;
+  }
+}

@@ -141,7 +141,7 @@ Reapply hosted auth config and update Vercel `APP_ORIGIN` before redeploying.
 - Cloudflare DNS: `useeatnow` CNAME to `bda3018598fedd2e.vercel-dns-017.com`, DNS only.
 - The hostname belongs to the existing Vercel project; Vercel serves the app and HTTPS certificate.
 - `APP_ORIGIN`, the Supabase site URL and auth callback URLs must use the same origin.
-- The previous `useeatnow-sg-demo.vercel.app` hostname redirects to the canonical URL with HTTP 308, preserving paths and query strings.
+- The previous `useeatnow-sg-demo.vercel.app` and `useitnow.utf.sh` hostnames redirect to the canonical URL with HTTP 308, preserving paths and query strings.
 - To apply an environment-only change, redeploy the existing production deployment;
   this preserves its application source. Run `node scripts/verify-hosted.mjs` afterward.
 

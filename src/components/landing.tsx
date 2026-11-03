@@ -21,8 +21,8 @@ export function Landing() {
             <span>what you have.</span>
           </h1>
           <p className={styles.intro}>
-            <span>Track your ingredients.</span>
-            <span>Find recipes that use them.</span>
+            <span>Keep track of your ingredients.</span>
+            <span>Find meal ideas using what you have.</span>
           </p>
           <div className={styles.actions}>
             <Button asChild size="lg" className={styles.primaryAction}>

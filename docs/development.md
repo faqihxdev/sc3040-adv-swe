@@ -181,7 +181,9 @@ pnpm test:browser:smoke # Critical flows on Chromium mobile/desktop.
 SQL tests roll back. Browser tests start an isolated app on port 3100, clean up
 fixtures and mock AI responses.
 
-Before release, run `pnpm test:browser` for the full Chromium/Firefox matrix at
+For layout-only changes, run the affected browser checks at mobile and desktop sizes.
+For changes to application behavior, authentication, APIs, database operations or dependencies,
+run `pnpm test:browser` for the full Chromium/Firefox matrix at
 360×800 and 1366×768. Chromium emulates mobile/touch; Firefox uses a narrow viewport.
 Some feature checks also use Pixel 8 and Laptop L dimensions. Record actual case
 viewports with the evidence.

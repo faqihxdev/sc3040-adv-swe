@@ -36,7 +36,7 @@ From the application root:
 
 1. Authenticate the Supabase and Vercel CLIs; obtain private `.env.hosted`.
 2. Link Vercel with `pnpm dlx vercel@61.0.0 link --project useeatnow-sg-demo --scope aqilakmal-project`.
-3. Complete the [full release checks](#release-checks) for the revision being deployed.
+3. Complete the applicable [release checks](#release-checks) for the revision being deployed.
 4. Run the required database/configuration steps below. Review each dry run before applying changes.
 
 ```sh
@@ -101,6 +101,13 @@ with the delivered build; record each subsequent delivery separately.
 
 ## Release checks
 
+Match verification to the change. Documentation and screenshot updates need formatting,
+link and visual checks, with no application deployment. Layout-only changes need
+`pnpm check`, focused browser checks at mobile and desktop sizes, and a live smoke check.
+Changes to application behavior, authentication, APIs, database operations or dependencies
+require the full release workflow below. Promoting an unchanged, tested build needs only
+the live smoke check.
+
 From the repository root:
 
 ```sh
@@ -112,7 +119,7 @@ gh run watch RUN_ID --exit-status
 Replace `RUN_ID` with the listed run. Confirm its commit matches the checkout being
 deployed and that fast checks plus both browser jobs passed. Download all three
 artifacts and retain them with the release commit. PR smoke checks provide quick
-feedback; this full run is the production release gate.
+feedback; this full run is required for the functional changes listed above.
 
 ## Initial setup / credentials
 

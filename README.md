@@ -40,8 +40,12 @@ See the [development workflow](docs/development.md#contributing) for setup, chec
 
 ## Team
 
-Muhammad Faqih Akmal · Phang Wei Zhang · See Toh Jin Jie · Gladys Woo Hui Min ·
-Chin Shao Yang · Eileen Lim Jing Wen.
+- Chin Shao Yang
+- Eileen Lim Jing Wen
+- Gladys Woo Hui Min
+- Muhammad Faqih Akmal
+- Phang Wei Zhang
+- See Toh Jin Jie
 
 ## Project records
 

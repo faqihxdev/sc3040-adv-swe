@@ -90,9 +90,10 @@ GitLab submission remain separate checks.
   `pnpm check` and eight focused layout/motion browser checks passed. Live checks at
   five viewport sizes confirmed the layout and sign-in navigation. These focused
   checks are separate from the 188-case full release run above.
-- The canonical domain is `useeatnow.utf.sh`. The previous Vercel address and
-  `useitnow.utf.sh` redirect to it. Database schema and existing household data were
-  unchanged by these releases.
+- The canonical domain is `useeatnow.utf.sh`. The previous Vercel address redirects
+  to it. The misspelled `useitnow.utf.sh` alias was removed from Vercel and Cloudflare
+  DNS on 3 November. Database schema and existing household data were unchanged by
+  these releases.
 
 ### 20 October 2026
 
@@ -172,7 +173,7 @@ Reapply hosted auth config and update Vercel `APP_ORIGIN` before redeploying.
 - Cloudflare DNS: `useeatnow` CNAME to `bda3018598fedd2e.vercel-dns-017.com`, DNS only.
 - The hostname belongs to the existing Vercel project; Vercel serves the app and HTTPS certificate.
 - `APP_ORIGIN`, the Supabase site URL and auth callback URLs must use the same origin.
-- The previous `useeatnow-sg-demo.vercel.app` and `useitnow.utf.sh` hostnames redirect to the canonical URL with HTTP 308, preserving paths and query strings.
+- The previous `useeatnow-sg-demo.vercel.app` hostname redirects to the canonical URL with HTTP 308, preserving paths and query strings.
 - To apply an environment-only change, redeploy the existing production deployment;
   this preserves its application source. Run `node scripts/verify-hosted.mjs` afterward.
 

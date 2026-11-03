@@ -213,7 +213,7 @@ Artifacts expire after 14 days. Archive accepted release reports with their comm
 
 ## Hosted demo
 
-[Open demo](https://useitnow.utf.sh) · private Alex/Sam accounts.
+[Open demo](https://useeatnow.utf.sh) · private Alex/Sam accounts.
 Vercel Hobby deploys manually; Supabase Free holds the shared demo database.
 Only the deployment operator needs cloud credentials; teammates use local Supabase.
 

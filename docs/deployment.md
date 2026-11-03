@@ -1,6 +1,6 @@
 # Hosted demo operations
 
-[UseEatNow](https://useitnow.utf.sh) uses Singapore hosting:
+[UseEatNow](https://useeatnow.utf.sh) uses Singapore hosting:
 
 - Vercel Hobby: `aqilakmal-project/useeatnow-sg-demo`.
 - Supabase Free: `useeatnow-sg-demo`, ref `kskfjituisvwdnlcligy`.
@@ -137,8 +137,8 @@ Reapply hosted auth config and update Vercel `APP_ORIGIN` before redeploying.
 
 ### Custom domain
 
-- Canonical URL: `https://useitnow.utf.sh`.
-- Cloudflare DNS: `useitnow` CNAME to `bda3018598fedd2e.vercel-dns-017.com`, DNS only.
+- Canonical URL: `https://useeatnow.utf.sh`.
+- Cloudflare DNS: `useeatnow` CNAME to `bda3018598fedd2e.vercel-dns-017.com`, DNS only.
 - The hostname belongs to the existing Vercel project; Vercel serves the app and HTTPS certificate.
 - `APP_ORIGIN`, the Supabase site URL and auth callback URLs must use the same origin.
 - The previous `useeatnow-sg-demo.vercel.app` hostname redirects to the canonical URL with HTTP 308, preserving paths and query strings.

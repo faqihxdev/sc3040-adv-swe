@@ -1,6 +1,6 @@
 # UseEatNow
 
-[![UseEatNow landing page with ingredient-based recipe suggestions and a gallery of meals.](docs/images/landing.png)](https://useitnow.utf.sh)
+[![UseEatNow landing page with ingredient-based recipe suggestions and a gallery of meals.](docs/images/landing.png)](https://useeatnow.utf.sh)
 
 A team project for NTU SC3040 Advanced Software Engineering, focused on project management
 and software delivery: planning, change control, risk, quality assurance and release coordination.
@@ -8,7 +8,7 @@ and software delivery: planning, change control, risk, quality assurance and rel
 The product is a shared household pantry that turns available ingredients into meal suggestions.
 It tracks exact quantities, reserves cooking portions, and records actual use and waste.
 
-[Live demo](https://useitnow.utf.sh) · [Project board](https://github.com/users/faqihxdev/projects/1) · [User guide](docs/user-guide.md) · [Development](docs/development.md)
+[Live demo](https://useeatnow.utf.sh) · [Project board](https://github.com/users/faqihxdev/projects/1) · [User guide](docs/user-guide.md) · [Development](docs/development.md)
 
 ## Architecture
 

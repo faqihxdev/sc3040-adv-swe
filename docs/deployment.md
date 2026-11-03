@@ -73,9 +73,33 @@ GitLab submission remain separate checks.
 
 ## Release record
 
+### 3 November 2026
+
+- Current production: [useeatnow.utf.sh](https://useeatnow.utf.sh), Vercel deployment
+  `dpl_2522dpUAdxpT8GuxzFk3oMSzttHp`, built from `8246f3c`. Its tree matches
+  merge commit `02511dc` from [PR #94](https://github.com/faqihxdev/sc3040-adv-swe/pull/94).
+- [PR #93](https://github.com/faqihxdev/sc3040-adv-swe/pull/93) moved the application
+  to the GitHub repository root, added the new landing page and consolidated guides
+  in `docs/`. The GitLab course package still uses its `source-code/` wrapper.
+- The [full release run](https://github.com/faqihxdev/sc3040-adv-swe/actions/runs/41562122934)
+  passed on `e798f35`, whose tree matches the PR #93 merge `76aa1bd`: 218 unit tests,
+  five SQL suites and 188 browser cases, 94 each on Chromium and Firefox. Both
+  browser jobs passed local restore practice. Artifacts: `unit-coverage`,
+  `local-release-chromium` and `local-release-firefox`.
+- PR #94 subsequently centered the landing content and refined the README preview.
+  `pnpm check` and eight focused layout/motion browser checks passed. Live checks at
+  five viewport sizes confirmed the layout and sign-in navigation. These focused
+  checks are separate from the 188-case full release run above.
+- The canonical domain is `useeatnow.utf.sh`. The previous Vercel address and
+  `useitnow.utf.sh` redirect to it. Database schema and existing household data were
+  unchanged by these releases.
+
+### 20 October 2026
+
 - Released: 20 October 2026.
 - Source: `72722f4`, [PR #75](https://github.com/faqihxdev/sc3040-adv-swe/pull/75).
-- Vercel deployment: `dpl_YNs2UVpd1dU2JtbAHfnKksxu6jGx`, serving the production URL.
+- Vercel deployment: `dpl_YNs2UVpd1dU2JtbAHfnKksxu6jGx`, the production deployment
+  for this release.
 - Supabase migrations `202610200001_cooking_reservations.sql` and
   `202610200002_reservation_membership_updates.sql` are applied; the migration check is clean.
 - A private pre-migration export retains roles, schema, data and migration history.
@@ -152,7 +176,7 @@ Reapply hosted auth config and update Vercel `APP_ORIGIN` before redeploying.
 - To apply an environment-only change, redeploy the existing production deployment;
   this preserves its application source. Run `node scripts/verify-hosted.mjs` afterward.
 
-On 3 November 2026, source `72722f4` was rebuilt as deployment
+Before the landing-page releases on 3 November 2026, source `72722f4` was rebuilt as deployment
 `dpl_GhzeYLJYdmKVqumsKZ35YB7BBK2b` with the custom origin. Hosted checks passed
 HTTPS, both account roles, household isolation and request-origin checks without
 inventory writes or AI calls.

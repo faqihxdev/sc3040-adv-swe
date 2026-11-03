@@ -26,8 +26,8 @@ const assessment = {
   acceptance: 'Recorded observation; semantic QA and final release decisions remain separate.',
 };
 writeFileSync(join(source, 'criterion-assessment.json'), JSON.stringify(assessment, null, 2));
-// Keep copied TypeScript outside the app compiler's recursive include paths.
-const archiveDirectory = resolve('../reports/lab5-evidence');
+// Reports are ignored by Git and excluded from the app compiler.
+const archiveDirectory = resolve('reports/lab5-evidence');
 mkdirSync(archiveDirectory, { recursive: true });
 let pack = join(archiveDirectory, 'pack-2026-10-20');
 for (let suffix = 2; existsSync(pack); suffix++)
@@ -73,7 +73,7 @@ for (const name of [
   'reservation-example.svg',
   'reservation-example.preview.png',
 ]) {
-  cpSync(join('../system-documentation/lab5-evidence', name), join(pack, 'diagrams', name), {
+  cpSync(join('evidence/diagrams', name), join(pack, 'diagrams', name), {
     errorOnExist: true,
     force: false,
   });

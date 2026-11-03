@@ -93,7 +93,14 @@ test('saved demo recovery continues through confirmation and Insights without AI
     );
   });
   await page.reload();
-  await page.getByRole('button', { name: 'Cook', exact: true }).click();
+  // Reloaded server markup can appear before the client handlers are ready.
+  // These actions only open views, so retry until the requested view is visible.
+  await expect(async () => {
+    await page.getByRole('button', { name: 'Cook', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Meal suggestions', exact: true })).toBeVisible({
+      timeout: 500,
+    });
+  }).toPass({ timeout: 10_000 });
   await page.clock.fastForward(31000);
   await expect(
     page.getByRole('button', { name: 'Use saved demo recipes', exact: true }),
@@ -159,7 +166,12 @@ test('saved demo recovery continues through confirmation and Insights without AI
   await expect(page.getByRole('button', { name: 'I’ve finished cooking' })).toBeVisible();
   await page.reload();
   await expect(page.getByRole('button', { name: 'I’ve finished cooking' })).toBeVisible();
-  await page.getByRole('button', { name: 'I’ve finished cooking' }).click();
+  await expect(async () => {
+    await page.getByRole('button', { name: 'I’ve finished cooking' }).click();
+    await expect(page.getByRole('dialog', { name: 'Record meal', exact: true })).toBeVisible({
+      timeout: 500,
+    });
+  }).toPass({ timeout: 10_000 });
   await page.getByRole('button', { name: 'Waste details for Bean sprouts', exact: true }).click();
   await page.getByLabel('Waste amount for Bean sprouts (optional)', { exact: true }).fill('10');
   await selectOption(page, 'Waste reason for Bean sprouts', 'Preparation scraps');

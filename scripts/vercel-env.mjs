@@ -8,7 +8,7 @@ if (
   hosted.NEXT_PUBLIC_SUPABASE_URL !== `https://${hosted.DEMO_SEED_PROJECT_REF}.supabase.co`
 )
   throw new Error('An explicit hosted demo target is required.');
-const root = parseEnv(readFileSync('../.env', 'utf8'));
+const root = parseEnv(readFileSync('.env', 'utf8'));
 const values = {
   NEXT_PUBLIC_SUPABASE_URL: hosted.NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: hosted.NEXT_PUBLIC_SUPABASE_ANON_KEY,

@@ -1,24 +1,15 @@
-import { execFileSync } from "node:child_process";
-import { pathToFileURL } from "node:url";
+import { execFileSync } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
 
-export const ALLOWED_TYPES = [
-  "feat",
-  "fix",
-  "refactor",
-  "docs",
-  "test",
-  "chore",
-];
+export const ALLOWED_TYPES = ['feat', 'fix', 'refactor', 'docs', 'test', 'chore'];
 
-const TYPE_PATTERN = ALLOWED_TYPES.join("|");
+const TYPE_PATTERN = ALLOWED_TYPES.join('|');
 
 export const BRANCH_PATTERN = new RegExp(
   `^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?/(?:${TYPE_PATTERN})-[a-z0-9]+(?:-[a-z0-9]+)*$`,
 );
 
-export const SUBJECT_PATTERN = new RegExp(
-  `^(?:${TYPE_PATTERN}): \\S(?:.*\\S)?$`,
-);
+export const SUBJECT_PATTERN = new RegExp(`^(?:${TYPE_PATTERN}): \\S(?:.*\\S)?$`);
 
 export function isValidBranchName(branchName) {
   return BRANCH_PATTERN.test(branchName);
@@ -38,9 +29,7 @@ export function findBlockingErrors(branchName, pullRequestTitle) {
   }
 
   if (!isValidSubject(pullRequestTitle)) {
-    errors.push(
-      `Invalid PR title "${pullRequestTitle}". Expected <type>: <message>.`,
-    );
+    errors.push(`Invalid PR title "${pullRequestTitle}". Expected <type>: <message>.`);
   }
 
   return errors;
@@ -57,9 +46,9 @@ export function findCommitWarnings(commits) {
 
 export function readNonMergeCommits(baseSha, headSha) {
   const output = execFileSync(
-    "git",
-    ["rev-list", "--reverse", "--no-merges", `${baseSha}..${headSha}`],
-    { encoding: "utf8" },
+    'git',
+    ['rev-list', '--reverse', '--no-merges', `${baseSha}..${headSha}`],
+    { encoding: 'utf8' },
   ).trim();
 
   if (!output) {
@@ -68,8 +57,8 @@ export function readNonMergeCommits(baseSha, headSha) {
 
   return output.split(/\r?\n/).map((sha) => ({
     sha,
-    subject: execFileSync("git", ["show", "-s", "--format=%s", sha], {
-      encoding: "utf8",
+    subject: execFileSync('git', ['show', '-s', '--format=%s', sha], {
+      encoding: 'utf8',
     }).trimEnd(),
   }));
 }
@@ -81,10 +70,8 @@ function readOptions(argumentsList) {
     const key = argumentsList[index];
     const value = argumentsList[index + 1];
 
-    if (!key?.startsWith("--") || value === undefined) {
-      throw new Error(
-        "Expected --branch, --title, --base, and --head arguments.",
-      );
+    if (!key?.startsWith('--') || value === undefined) {
+      throw new Error('Expected --branch, --title, --base, and --head arguments.');
     }
 
     options[key.slice(2)] = value;
@@ -97,9 +84,7 @@ function main() {
   const options = readOptions(process.argv.slice(2));
 
   if (!options.branch || !options.title || !options.base || !options.head) {
-    throw new Error(
-      "Expected --branch, --title, --base, and --head arguments.",
-    );
+    throw new Error('Expected --branch, --title, --base, and --head arguments.');
   }
 
   const commits = readNonMergeCommits(options.base, options.head);
@@ -107,14 +92,14 @@ function main() {
   const errors = findBlockingErrors(options.branch, options.title);
 
   if (warnings.length > 0) {
-    console.warn("Commit naming warnings (advisory only):");
+    console.warn('Commit naming warnings (advisory only):');
     for (const warning of warnings) {
       console.warn(`- ${warning}`);
     }
   }
 
   if (errors.length > 0) {
-    console.error("Naming convention check failed:");
+    console.error('Naming convention check failed:');
     for (const error of errors) {
       console.error(`- ${error}`);
     }

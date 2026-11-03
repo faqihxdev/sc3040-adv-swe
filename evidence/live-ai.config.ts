@@ -5,7 +5,7 @@ import { parseEnv } from 'node:util';
 if (process.env.UEN_LIVE_EVIDENCE !== 'approved')
   throw new Error('Live evidence requires UEN_LIVE_EVIDENCE=approved and incurs API charges.');
 const local = parseEnv(readFileSync('.env.local', 'utf8'));
-const root = existsSync('../.env') ? parseEnv(readFileSync('../.env', 'utf8')) : {};
+const root = existsSync('.env') ? parseEnv(readFileSync('.env', 'utf8')) : {};
 if (new URL(local.NEXT_PUBLIC_SUPABASE_URL ?? '').hostname !== '127.0.0.1')
   throw new Error('Live evaluation requires the local test database.');
 const key = local.OPENAI_API_KEY || root.OPENAI_API_KEY;

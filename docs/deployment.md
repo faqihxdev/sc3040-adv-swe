@@ -32,7 +32,7 @@ Verified 1 October 2026.
 
 ## Existing deployment
 
-From `source-code`:
+From the application root:
 
 1. Authenticate the Supabase and Vercel CLIs; obtain private `.env.hosted`.
 2. Link Vercel with `pnpm dlx vercel@61.0.0 link --project useeatnow-sg-demo --scope aqilakmal-project`.
@@ -116,7 +116,7 @@ feedback; this full run is the production release gate.
 
 ## Initial setup / credentials
 
-From `source-code`:
+From the application root:
 
 1. Run `node scripts/hosted.mjs create`, then `node scripts/hosted.mjs keys`. These reuse the named project and save credentials privately.
 2. Link, migrate and configure as above.
@@ -153,7 +153,7 @@ Reapply hosted auth config and update Vercel `APP_ORIGIN` before redeploying.
 - The server checks current quantities, expiry dates, exclusions and selected staples, then issues fresh cooking tickets. Confirmation and Insights use the normal workflow. Results show **Saved demo recipes** and retain that source in the meal record.
 - Reset the demo before rehearsal for all three options. This fallback requires the app and database to be reachable.
 
-The saved set comes from the second of three live GPT-6 Luna trials against the reset seed. Each trial returned three validated recipes in 20.8 to 21.1 seconds. Recipe data is in `source-code/src/server/demo-recipes.json`; prepared low-quality dish illustrations are in `source-code/public/demo-meals/`.
+The saved set comes from the second of three live GPT-6 Luna trials against the reset seed. Each trial returned three validated recipes in 20.8 to 21.1 seconds. Recipe data is in `src/server/demo-recipes.json`; prepared low-quality dish illustrations are in `public/demo-meals/`.
 
 ## Backup / recovery
 

@@ -1,6 +1,6 @@
 # Presentation evidence checks
 
-Run commands from `source-code`. These checks use local disposable fixtures and
+Run commands from the application root. These checks use local disposable fixtures and
 do not reset the shared demo. The ordinary unit/browser suites are unchanged.
 
 | Command                                                        | Purpose                                                                           |
@@ -56,6 +56,7 @@ map and Q&A index. Tasks #50, #51 and #52 record live evaluation, verification
 and final release status. A preparation archive does not authorise deployment
 or establish a clean, reviewed release baseline.
 
-The archive builder writes outside the app, in repository `reports/lab5-evidence`.
-Extract downloaded archives outside `source-code`; their reference copies of
-TypeScript files are not a second runnable checkout.
+The archive builder writes to the ignored `reports/lab5-evidence` directory.
+Generated report directories are excluded from TypeScript compilation. Extract
+downloaded archives outside the application; their reference copies of TypeScript
+files are not a second runnable checkout.

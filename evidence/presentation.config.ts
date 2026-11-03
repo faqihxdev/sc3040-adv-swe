@@ -1,16 +1,19 @@
 import { defineConfig } from '@playwright/test';
+import { join, resolve } from 'node:path';
 import base from '../playwright.config';
+
+const recordingDirectory = resolve('reports/presentation-recording');
 
 export default defineConfig({
   ...base,
   testDir: '.',
   testMatch: 'presentation.spec.ts',
   timeout: 120_000,
-  outputDir: '../reports/presentation-recording/accepted',
+  outputDir: join(recordingDirectory, 'accepted'),
   reporter: [
     ['list'],
-    ['html', { outputFolder: '../reports/presentation-recording/html', open: 'never' }],
-    ['junit', { outputFile: '../reports/presentation-recording/result.xml' }],
+    ['html', { outputFolder: join(recordingDirectory, 'html'), open: 'never' }],
+    ['junit', { outputFile: join(recordingDirectory, 'result.xml') }],
   ],
   projects: [
     {

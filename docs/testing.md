@@ -20,14 +20,14 @@ Mapped requirements still require reviewer acceptance.
 
 ## Execution and evidence
 
-Follow [Run and view tests](../source-code/README.md#run-and-view-tests) for setup,
-execution, HTML viewers and CI artifact downloads. Commands run from `source-code`.
+Follow [Run and view tests](../README.md#run-and-view-tests) for setup,
+execution, HTML viewers and CI artifact downloads. Commands run from the application root.
 
 | Command                    | Evidence / scope                                                                                                                                                           |
 | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `pnpm check`               | Format, lint, types, unit results in `reports/unit.xml`, coverage in `coverage/lcov-report/index.html`, production build. Coverage measures domain rules and meal tickets. |
 | `pnpm test:db`             | `reports/database.txt`; five transactional SQL suites.                                                                                                                     |
-| `pnpm test:browser:smoke`  | Six tagged core workflows on Chromium mobile/desktop; browser XML, HTML and environment reports.                                                                           |
+| `pnpm test:browser:smoke`  | Nine tagged checks on Chromium mobile/desktop; browser XML, HTML and environment reports.                                                                                  |
 | `pnpm test:browser`        | `reports/browser.xml`, `reports/browser-*.json`, `playwright-report/index.html`; isolated app at port 3100 with mocked AI.                                                 |
 | `pnpm db:restore:practice` | `reports/restore.json`; separate local restore and row/RLS checks.                                                                                                         |
 
@@ -37,7 +37,7 @@ The [release record](deployment.md#release-record) identifies the tested and
 deployed builds, retained results and remaining acceptance. Final verification is
 tracked in [#51](https://github.com/faqihxdev/sc3040-adv-swe/issues/51).
 
-- PRs and pushes to `main` run fast checks, SQL and the Chromium smoke suite once per event. Smoke covers public entry, inventory CRUD/undo, photo review, cooking/analytics, household rejoining and API protection.
+- PRs and pushes to `main` run fast checks, SQL and the Chromium smoke suite once per event. Smoke covers public entry, inventory CRUD/undo, photo review, saved demo recovery, cooking/reservations/analytics, household rejoining and API protection.
 - Manually select `suite: release` in App checks before production deployment. Both browser jobs must pass; each runs its mobile/desktop matrix, SQL and restore practice on a separate local Supabase.
 - Archive `unit-coverage`, `local-release-chromium` and `local-release-firefox` from the same run. Release manifests identify the source commit and evidence hashes. Deployment remains manual.
 - Failures include browser screenshots/traces.
@@ -47,7 +47,7 @@ tracked in [#51](https://github.com/faqihxdev/sc3040-adv-swe/issues/51).
 
 ## Test cases
 
-Executable cases contain their inputs, steps and assertions in `source-code/tests`.
+Executable cases contain their inputs, steps and assertions in `tests`.
 
 | Case group                                                                  | Input / action → expected result                                                                                                                                   |
 | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -94,23 +94,23 @@ results when reviewing the release.
 `A` = automated assertions; `I` = inspection; `M` = manual acceptance still needed.
 Mixed methods mean **partial verification**, not full acceptance.
 
-| Requirement IDs                     | Verification / remaining evidence                                                                                                                                                                           |
-| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| CON-01, CON-02; IR-02; FR-04, FR-05 | A: meal/photo validation, inventory browser cases, core/batch SQL. I: complete field-length/calendar rules.                                                                                                 |
-| CON-03; OR-01                       | A: saved-state/browser/API checks. M: two-device refresh and state/score explanation walkthrough.                                                                                                           |
-| FR-01, FR-02, FR-03; IR-03          | A: quantity/unit eligibility, staples, recipe validation, atomic reservations, reload recovery, concurrent images and retry/cache checks. TC-RES-01/02. M: live recommendation suitability.                 |
-| FR-06, FR-07; IR-04; PR-04; OR-02   | A: prefilled use/waste, stock left, hold protection, reconciliation, expiry/cancellation, atomic/idempotent/stale writes and membership cleanup. TC-RES-03 to TC-RES-06. M: complete two-device acceptance. |
-| FR-08, FR-09; PR-05; OR-03          | A: analytics/expiry fixtures, preserved snapshots, untracked history, exact-unit drill-downs and chart-data tables. M: complete chart labels, keyboard/readability and reporting-limit walkthrough.         |
-| FR-10                               | A: local signup, invalid login, recovery request, logout. M: email confirmation and complete recovery-link/password-change flow; hosted custom SMTP.                                                        |
-| FR-11, FR-12, FR-13; IR-01; OP-03   | A: exclusions, join/leave/transfer, ownership restrictions, typed deletions, foreign-household RLS and API validation.                                                                                      |
-| PR-01, PR-02                        | A: schema/ID/unit/amount/exclusion filters, bounded recipe retry and authorised image-cache operations. M: live prompt-injection and ingredient-alias scenarios.                                            |
-| PR-03                               | A: hand-calculated points, denominator, zero-eligible case and unrounded tie-breaking.                                                                                                                      |
+| Requirement IDs                     | Verification / remaining evidence                                                                                                                                                                                    |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CON-01, CON-02; IR-02; FR-04, FR-05 | A: meal/photo validation, inventory browser cases, core/batch SQL. I: complete field-length/calendar rules.                                                                                                          |
+| CON-03; OR-01                       | A: saved-state/browser/API checks. M: two-device refresh and state/score explanation walkthrough.                                                                                                                    |
+| FR-01, FR-02, FR-03; IR-03          | A: quantity/unit eligibility, staples, recipe validation, atomic reservations, reload recovery, concurrent images and retry/cache checks. TC-RES-01/02. M: live recommendation suitability.                          |
+| FR-06, FR-07; IR-04; PR-04; OR-02   | A: prefilled use/waste, stock left, hold protection, reconciliation, expiry/cancellation, atomic/idempotent/stale writes and membership cleanup. TC-RES-03 to TC-RES-06. M: complete two-device acceptance.          |
+| FR-08, FR-09; PR-05; OR-03          | A: analytics/expiry fixtures, preserved snapshots, untracked history, exact-unit drill-downs and chart-data tables. M: complete chart labels, keyboard/readability and reporting-limit walkthrough.                  |
+| FR-10                               | A: local signup, invalid login, recovery request, logout. M: email confirmation and complete recovery-link/password-change flow; hosted custom SMTP.                                                                 |
+| FR-11, FR-12, FR-13; IR-01; OP-03   | A: exclusions, join/leave/transfer, ownership restrictions, typed deletions, foreign-household RLS and API validation.                                                                                               |
+| PR-01, PR-02                        | A: schema/ID/unit/amount/exclusion filters, bounded recipe retry and authorised image-cache operations. M: live prompt-injection and ingredient-alias scenarios.                                                     |
+| PR-03                               | A: hand-calculated points, denominator, zero-eligible case and unrounded tie-breaking.                                                                                                                               |
 | PR-06                               | M: 20 live recipe-ready timings; at least 18 within 45 seconds. Empty/error responses count as failures. Retain failures/retries, conditions and separate image timings; task #50 records the criterion and results. |
-| OP-01, OP-04                        | A: failure preserves preferences, drafts and saved state. I/M: user guide, recovery instructions and walkthrough.                                                                                           |
-| OP-02; DR-01                        | I: env ignore/redaction, lockfile, CLI/config/migrations/seed. A: clean build and local CI setup. M: fresh teammate setup/security review.                                                                  |
-| OP-05                               | A: separate local restore/count/RLS drill. M: hosted backup, four-copy retention, restricted access, seven-day loss / one-working-day recovery objectives.                                                  |
-| OP-06                               | A: actor/history snapshots and compensating undo in core SQL. I: displayed actor/time.                                                                                                                      |
-| DR-02, DR-03                        | I/M: source/config/applied-migration baseline, live release smoke and compatible rollback; see deployment runbook.                                                                                          |
+| OP-01, OP-04                        | A: failure preserves preferences, drafts and saved state. I/M: user guide, recovery instructions and walkthrough.                                                                                                    |
+| OP-02; DR-01                        | I: env ignore/redaction, lockfile, CLI/config/migrations/seed. A: clean build and local CI setup. M: fresh teammate setup/security review.                                                                           |
+| OP-05                               | A: separate local restore/count/RLS drill. M: hosted backup, four-copy retention, restricted access, seven-day loss / one-working-day recovery objectives.                                                           |
+| OP-06                               | A: actor/history snapshots and compensating undo in core SQL. I: displayed actor/time.                                                                                                                               |
+| DR-02, DR-03                        | I/M: source/config/applied-migration baseline, live release smoke and compatible rollback; see deployment runbook.                                                                                                   |
 
 ## Presentation evidence
 
@@ -119,7 +119,7 @@ contains the master test plan, 21 acceptance-case groups, a native table mapping
 all 38 numbered SRS requirements, and primary/backup presentation examples.
 Mapped coverage is not final acceptance.
 
-`source-code/evidence` contains supplementary calculation/session checks, the
+`evidence` contains supplementary calculation/session checks, the
 explicitly gated paid evaluation, semantic inspection, active-reservation restore
 check and archive builder. Raw results and the original timing assessment are
 retained. Task #50 records the current 45-second criterion. The retained local

@@ -8,16 +8,7 @@ function git(...args) {
   if (result.status !== 0) throw new Error(result.stderr.trim());
   return result.stdout.trim();
 }
-const source = git(
-  'status',
-  '--porcelain',
-  '--',
-  '.',
-  '../system-documentation',
-  '../.github',
-  '../README.md',
-  '../.gitignore',
-);
+const source = git('status', '--porcelain', '--', '.');
 if (source)
   throw new Error(
     'Commit and review the release files first; a dirty checkout is not a release baseline.',

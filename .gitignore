@@ -60,8 +60,13 @@ reports/
 backups/
 .supabase/
 *.tsbuildinfo
-source-code/supabase/.temp/
-source-code/supabase/.branches/
+supabase/.temp/
+supabase/.branches/
 .vercel/
-source-code/deployment/supabase/.temp/
-source-code/deployment/supabase/.branches/
+deployment/supabase/.temp/
+deployment/supabase/.branches/
+
+.vercel
+.env*
+!.env.example
+next-env.d.ts
